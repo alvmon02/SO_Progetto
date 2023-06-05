@@ -1,0 +1,12 @@
+Matteo:
+	Attuatori/Relazione/Sensori
+	
+Alvaro
+	Park + Surround
+
+Mazzo:
+	Control-ECU
+	Input-Output
+
+
+//E aggiungere se mi manca qualcosa ;)
