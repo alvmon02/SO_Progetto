@@ -2,14 +2,15 @@
 *.d
 
 # Object files
-*.o
-*.ko
-*.obj
-*.elf
+#*.o
+#*.ko
+#*.obj
+#*.elf
+*.pdf
 
 # Linker output
-*.ilk
-*.map
+#*.ilk
+#*.map
 *.exp
 
 # Precompiled Headers
@@ -30,7 +31,7 @@
 
 # Executables
 *.exe
-*.out
+#*.out
 *.app
 *.i*86
 *.x86_64
