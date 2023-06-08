@@ -9,4 +9,12 @@ Mazzo:
 	Input-Output
 
 
+Composizione pratica del progetto
+Make file e strutturazione del progetto
+Esempi funzionamento e verifica
+Allineamento sintassi
+Commenti
+Relazione
+
+
 //E aggiungere se mi manca qualcosa ;)
