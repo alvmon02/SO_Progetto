@@ -8,7 +8,7 @@ Mazzo:
 	Control-ECU
 	Input-Output
 
-
+DAL 12 IN POI:
 Composizione pratica del progetto
 Make file e strutturazione del progetto
 Esempi funzionamento e verifica

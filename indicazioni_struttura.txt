@@ -1,0 +1,39 @@
+PROCESSO PADRE:
+CENTRAL-ECU
+Questo processo INIZIALIZZERÀ IL SISTEMA, creando tutti i PIPE precedentemente alle chiamate dei processi figli.
+
+Il SERVER-SOCKET sarà creato dal sensore PARK-ASSIST al momento del bisogno. (Questo rallenterebbe l'attivazione di park assist, volendo potremmo creare il server-socket in central ECU e far si che park-assist si connetta come client una volta che si attiva, procedura più veloce. Comunque l'attivazione di park assist minimamente più lenta non dovrebbe essere un problema, ma gestendolo come facciamo per i pipe forse si genera meno confusione.)
+
+
+ATTUATORI:
+STEER...-> 1 volta al secondo controlla il pipe non bloccante e scrive nel log di conseguenza
+THRO.. e BRAKE.. -> attendono sulla read del pipe (quindi bloccante) di ricevere messaggi dalla ECU. La ECU dovrà gestire la sincronizzazione (inviare una volta al sec)
+
+SENSORI:
+WINDSHIELD..-> 1 volta al secondo legge e invia dati sul pipe bloccante (sola scrittura). La lettura dei dati da parte della ECU dovrà essere immediata e possibilmente supponendo che nel pipe ci siano già più di un solo dato (getline()?)
+FOWARD...-> 1 volta al secondo legge i dati da urandom, se legge 8 byte allora li invia tramite pipe bloccante (sola lettura) alla ECU che dovrà leggerli immediatamente. I dati inviati alla ECU saranno loggati, gli altri no.
+
+
+NOMI DEI FILE DI LOG:
+-steer.log
+-throttle.log
+-brake.log
+-camera.log (windshield camera)
+-radar.log (foward facing radar)
+-assist.log (park assist)
+-cameras.log (surround view cameras)
+
+NOMI DEI FILE TEMPORANEI:
+
+PIPE:
+-steer.pipe
+-throttle.pipe
+-brake.pipe
+-camera.pipe
+-radar.pipe
+-cameras.pipe
+-hmi-in.pipe
+-hmi-out.pipe
+
+SOCK:
+-assist.sock

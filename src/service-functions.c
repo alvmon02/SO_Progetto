@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <service-functions.h>
+#include "../include/service-functions.h"
 
 short int initialize_socket(char * sock_pathname, int domain, int type, int
 queue_len){
@@ -33,4 +33,17 @@ short int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 	unlink (pipe_pathname);
 	mkfifo(pipe_pathname, mode);
 	return (fd = open(pipe_pathname, flags));
+}
+
+void broadcast_input (int pipe_fd, char * message, size_t size){
+	write (pipe_fd, &message, size);
+}
+
+void log_func (int log_fd, char * log_phrase, size_t size) {
+	write(log_fd, log_phrase, size);
+}
+
+void broad_log (int pipe_fd, int log_fd, char * message, size_t size){
+	broadcast_input(pipe_fd, message, size);
+	log_func(log_fd, message, size);
 }
