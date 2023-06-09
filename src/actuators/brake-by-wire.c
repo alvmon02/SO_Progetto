@@ -18,12 +18,18 @@ void log_func ( );
 void emergency_arrest ( );
 
 //La funzione main esegue le operazioni relative al componente brake-by-wire.c
-int main(){
+int main ( ) {
 
 	/* Connessione del file descriptor del pipe per la comunicazione tra central ECU e brake-by-wire.
 	 * Il protocollo impone che il pipe sia creato durante la fase di inizializzazione del processo central-ECU e che
 	 * venga aperto in sola lettura dal processo brake-by-wire il quale vi legga al bisogno. */
 	short int pipe_fd =  open ("../tmp/brake.pipe", O_RDONLY);
+
+	/* Connessione del file descriptor del log file. Apertura in sola scrittura.
+	 * Qualora il file non esista viene creato. Qualora il file sia presente
+	 * si mantengono le precedenti scritture. Dato che viene eseguito l'unlink
+	 * da parte della central-ECU allora non vi saranno scritture pendenti da
+	 * precedenti esecuzioni. */
 	log_fd = open("../log/brake.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
 
 	/* Nel caso sia inviato dalla central ECU un segnale di "PERICOLO",
