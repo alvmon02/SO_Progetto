@@ -19,7 +19,7 @@ short int log_fd;
 short int pipe_fd;
 
 // La funzione main esegue le operazioni relative al componente
-// foward-facing-radar
+// forward-facing-radar
 int main ( ) {
 
   // Connessione del file descriptor del pipe per la comunicazione tra central

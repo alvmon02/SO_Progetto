@@ -29,13 +29,12 @@ int main ( ) {
   // da parte della central-ECU, non vi saranno scritture pendenti da
   // precedenti esecuzioni.
   log_fd = open("../log/camera.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
-  // Connessione del file descriptor al file da cui ottenere i dati di input.
-  // Apertura in sola lettura all'inizio del file.
-  FILE *input_file = fopen("../include/frontCamera.data", "r");
+  // Inizializzazione e connessione del file descriptor al file da cui
+  // ottenere i dati di input. Apertura in sola lettura all'inizio del file.
+  int input_file = open("../include/frontCamera.data", O_RDONLY);
   // Inizializzazione della stringa di input che rappresenta il messaggio da
   // trasmettere alla central-ECU da parte del processo.
   char *camera_input = malloc(INPUT_MAX_LEN);
-  size_t input_len;
   int nread;
 
   // Il ciclo successivo rappresenta il cuore del processo.
@@ -45,8 +44,8 @@ int main ( ) {
   // Fintantoché il file non termina i dati vengono trasmessi alla
   // central-ECU, una volta terminato il processo termina con codice
   // EOF (=0).
-  while ((nread = getline(&camera_input, &input_len, input_file)) > 0) {
-    broad_log(pipe_fd, log_fd, camera_input, input_len);
+  while ((nread = read(input_file, &camera_input, INPUT_MAX_LEN)) > 0) {
+    broad_log(pipe_fd, log_fd, camera_input, INPUT_MAX_LEN);
     sleep(1);
   }
   exit(EOF);

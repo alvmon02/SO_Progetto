@@ -15,5 +15,6 @@ queue_len);
 
 	void broad_log (int pipe_fd, int log_fd, char * message, size_t size);
 
+	char * str_toupper(char * str);
 
 #endif // SERVICE_FUNCTIONS_H_DEFINED
