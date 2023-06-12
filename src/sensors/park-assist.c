@@ -11,7 +11,7 @@
 log( ) */
 #include <unistd.h> /*per sistem calls e pipe*/
 #include <sys/un.h>
-#include <service-functions.h>
+#include "../../include/service-functions.h"
 
 #define INPUT_LEN 8
 #define PARK_TIME 30
