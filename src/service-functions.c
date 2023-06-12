@@ -17,11 +17,12 @@ queue_len){
 	struct sockaddr_un addr;
 	addr.sun_family = domain;
 	strcpy(addr.sun_path, sock_pathname);
-	if (bind(fd, (struct sockaddr *) &addr, sizeof(addr))) {
+	if (!bind(fd, (struct sockaddr *) &addr, sizeof(addr))) {
 		perror("bind");
 		exit(EXIT_FAILURE);
 	}
-	if (listen (fd, queue_len)){
+	// separerei l'inizializzazione dalla attivazione del socket
+	if (!listen (fd, queue_len)){
 		perror("listen");
 		exit(EXIT_FAILURE);
 	}

@@ -27,9 +27,9 @@ int main() {
 	initialize_socket("../tmp/hmi.sock", AF_UNIX, SOCK_STREAM, 5);
 	pipe((int *) comm_pipe);
 
-	if(fork())
+	if(!fork())
 		input_term();
-	if(fork())
+	if(!fork())
 		output_term();
 
 
