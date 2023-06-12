@@ -1,6 +1,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define READ 0
+#define WRITE 1
 
 int steer_init ( );
 void turn ( int , char * );
@@ -17,13 +22,17 @@ int main(){
 	int brake_pipe_fd = brake_init(&brake_process);
 	int camera_pipe_fd = camera_init();
 	int radar_pipe_fd = radar_init();
+	short int *hmi_fd = malloc(2*sizeof(short int));
+	hmi_fd[READ] = initialize_pipe("../temp/hmi-input.pipe", O_RDONLY, 0660);
+	hmi_fd[WRITE] = initialize_pipe("../temp/hmi-output.pipe", O_WRONLY, 0660);
+
 }
 
 
 
 int steer_init ( ) {
 	if(!fork())
-		execl("./steer-by-wire", "steer-by-wire", NULL);
+		execl("./steer-by-wire", NULL);
 	else{
 		int pipe_fd;
 		while(pipe_fd = open ("../temp/steer.pipe", O_WRONLY) >= 0)
@@ -34,7 +43,7 @@ int steer_init ( ) {
 
 int throttle_init ( ) {
 	if(!fork())
-		execl("./throttle-control", "throttle-control", NULL);
+		execl("./throttle-control", NULL);
 	else
 		return initialize_pipe("../temp/throttle.pipe", O_WRONLY, 660);
 }
@@ -42,32 +51,33 @@ int throttle_init ( ) {
 // questo pero' deve restituire anche il pid del processo creato per segnale d'arresto
 int brake_init (pid_t *brake_process_addr) {
 	if((*brake_process_addr = fork()) == 0)
-		execl("./brake-by-wire", "brake-by-wire", NULL);
+		execl("./brake-by-wire", NULL);
 	else
 		return initialize_pipe("../temp/brake.pipe", O_WRONLY, 660);
 }
 
 int camera_init () {
 	if(!fork())
-		execl("./windshield-camera", "windshield-camera", NULL);
+		execl("./windshield-camera", NULL);
 	else
 		return initialize_pipe("../temp/camera.pipe", O_RDONLY, 660);
 }
 
 int radar_init () {
 	if(!fork())
-		execl("./forward-facing-radar", "forward-facing-radar", NULL);
+		execl("./forward-facing-radar", NULL);
 	else
 		return initialize_pipe("../temp/radar.pipe", O_RDONLY, 660);
 }
 
 int hmi_init () {
-	initialize_socket("../tmp/hmi.sock", AF_UNIX, SOCK_STREAM, 5);
+	pipe();
+	system();
 }
 
 int park_assist_init() {
 	if(!fork())
-		execl("./park-assist", "park-asssist", NULL);
+		execl("./park-assist", NULL);
 	else
 		return initialize_socket("../tmp/assist.sock", AF_UNIX, SOCK_STREAM, 5);
 }
@@ -86,3 +96,7 @@ void arrest(pid_t brake_process) {
 	speed = 0;
 }
 
+void send_command(int actuator_pipe_fd, int log_fd, int hmi_fd, char *command, size_t command_size) {
+	broad_log(actuator_pipe_fd, log_fd, command, command_size);
+	write(hmi_fd, command, command_size);
+}
