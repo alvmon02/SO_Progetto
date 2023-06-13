@@ -18,11 +18,12 @@ queue_len){
 	struct sockaddr_un addr;
 	addr.sun_family = domain;
 	strcpy(addr.sun_path, sock_pathname);
-	if (bind(fd, (struct sockaddr *) &addr, sizeof(addr))) {
+	if (!bind(fd, (struct sockaddr *) &addr, sizeof(addr))) {
 		perror("bind");
 		exit(EXIT_FAILURE);
 	}
-	if (listen (fd, queue_len)){
+	// separerei l'inizializzazione dalla attivazione del socket
+	if (!listen (fd, queue_len)){
 		perror("listen");
 		exit(EXIT_FAILURE);
 	}
@@ -38,7 +39,7 @@ short int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 
 // Funzione per l'invio di messaggi tramite pipe
 void broadcast_input (int pipe_fd, char * message, size_t size){
-	write (pipe_fd, &message, size);
+	write (pipe_fd, message, size);
 }
 // Funzione per la scrittura di frasi nel log file
 void log_func (int log_fd, char * log_phrase, size_t size) {

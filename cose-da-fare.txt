@@ -1,20 +1,23 @@
-Matteo:
-	Attuatori/Relazione/Sensori
-	
-Alvaro
-	Park + Surround
+Dicio:
+	Funzioni generiche sensori
+	Grafico
+	Relazione
+	Formattazione bytes
 
 Mazzo:
-	Control-ECU
-	Input-Output
+	Central-ECU
 
 DAL 12 IN POI:
-Composizione pratica del progetto
-Make file e strutturazione del progetto
+Alvaro:
+	Finire park assist
+	Make file e strutturazione del progetto
+	Composizione pratica del progetto
+
+#####	CI SI VEDE IL 15	#####
+
 Esempi funzionamento e verifica
 Allineamento sintassi
 Commenti
 Relazione
-
 
 //E aggiungere se mi manca qualcosa ;)
