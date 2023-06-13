@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "../include/service-functions.h"
 
 #define READ 0
 #define WRITE 1
@@ -41,7 +42,7 @@ int main(){
 
 	char *camera_buf = malloc(sizeof(char));
 	char *radar_buf = malloc(8);
-	while(TRUE) {
+	while(1) {
 		read(radar_pipe_fd, radar_buf, 8);
 		// QUI ORA DEVO LEGGERE DA HMI E FRONT WINDSHIELD CAMERA E AGIRE DI CONSEGUENZA
 	}

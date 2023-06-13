@@ -1,64 +1,62 @@
-// #include <error.h>  /*per funzione perror*/
-// #include <fcntl.h>  /*per open*/
-// #include <signal.h> /*per la funzione kill*/
-// #include <stdio.h>  /*per sprintf, getline */
-// #include <stdlib.h> /*per funzione exit*/
-// #include <string.h>
-// #include <sys/socket.h>
-// #include <sys/stat.h>  /*per mknod (sys call per mkfifo)*/
-// #include <sys/types.h> /*per mkfifo*/
-// #include <time.h> /*per le funzioni e le strutture relative a time, vedi
-// log( ) */
-// #include <unistd.h> /*per sistem calls e pipe*/
-//
-// #define INPUT_LEN 8
-//
-// short int log_fd;
-// short int serv_sock_fd;
-//
-// void broadcast_input(char *, int);
-// void log_func(char *, int);
-//
-// int main() { // COMMENTI DA CAMBIARE TUTTI!
-//
-// 	unlink("../tmp/assist.sock");
-// 	serv_sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-// 	struct sockaddr_un serv_addr, cli_addr;
-// 	int cli_addr_len;
-// 	serv_addr.sun_family = AF_UNIX;
-// 	strcpy(serv_addr.sun_path, "../tmp/assist.sock");
-// 	if (bind(serv_sock_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) {
-// 		perror("bind");
-// 		exit(EXIT_FAILURE);
-// 	}
-// 	if (listen (serv_sock_fd, 1)){
-// 		perror("listen");
-// 		exit(EXIT_FAILURE);
-// 	}
-//
-// 	log_fd = open("../log/assist.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
-// 	short int input_fd = open("../dev/urandom", O_RDONLY, 0400);
-//
-// 	char assist_input[INPUT_LEN];
-//
-// 	while (1) {
-// 		if (connect(serv_sock_fd, &cli_addr, &cli_addr_len)) {
-// 			for(int i = 0, i < PARK_TIME, i++){
-// 				broadcast_input(assist_input, INPUT_LEN);
-// 				log_func(assist_input, INPUT_LEN);
-// 				sleep(1);
-// 			}
-// 		} else
-// 			sleep(1);	/*si potrebbe anche togliere in realta'*/
-// 	}
-// }
-//
-// void broadcast_input(char *message, int size) {
-// 	write(pipe_fd, &message, INPUT_LEN);
-// 	return;
-// }
-//
-// void log_func(char *log_phrase, int size) {
-// 	write(log_fd, log_phrase, INPUT_LEN);
-// 	return;
-// }
+#include "../../include/service-functions.h"
+
+
+#define PARK_TIME 30
+
+
+int main(int argc, char const *argv[])
+{
+	int surround_view_cameras_pipe_fd,
+		read_bytes,
+		log_cameras_fd,
+		counter = 0,
+		ret = EXIT_FAILURE;
+		
+	char *input = malloc(SURR_CAM_LEN);
+	
+	FILE* file_descriptor;
+		
+	file_descriptor = fopen("/dev/urandom","r");
+	
+	log_cameras_fd = open("../../log/cameras.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
+	
+	do
+	{
+		surround_view_cameras_pipe_fd = open("assist-surround.pipe",O_WRONLY);
+		
+		if(surround_view_cameras_pipe_fd == -1)
+		sleep(0.1);
+		
+	} while (surround_view_cameras_pipe_fd == -1);
+	
+	/** 
+	 * Ciclo che legge da /dev/urandom e scrive su cameras.log,
+	 * e contemporaneamente scrive su assist-surround.pipe
+	 */
+	while(ret)
+	{
+		read_bytes = fread(input,1,SURR_CAM_LEN,file_descriptor);
+		
+		if(read_bytes != SURR_CAM_LEN){
+			perror("fread");
+			ret = EXIT_FAILURE;
+		}
+		else{
+			broad_log(surround_view_cameras_pipe_fd,log_cameras_fd,input,SURR_CAM_LEN);
+			
+				//Aspettare un secondo prima di aggiungere uno al contatore
+			wait(1);
+			
+			if(counter++ == PARK_TIME)
+				ret = EXIT_SUCCESS;
+		}
+	}
+	
+	
+	//Chiusura di tutti i file descriptor
+	fclose(file_descriptor);
+	close(log_cameras_fd);
+	close(surround_view_cameras_pipe_fd);
+	
+	return ret;
+}
