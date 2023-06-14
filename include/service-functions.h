@@ -2,6 +2,7 @@
 #ifndef SERVICE_FUNCTIONS_H_DEFINED
 	#define SERVICE_FUNCTIONS_H_DEFINED
 
+	#include <sys/types.h>
 	#define READ 0
 	#define WRITE 1
 	#define NORMALE 0
@@ -15,9 +16,9 @@ queue_len);
 
 	short int initialize_pipe(char * pipe_pathname, int flags, mode_t mode);
 
-	void broadcast_input (int pipe_fd, char * message, size_t size);
+	char * hex (unsigned long bytes);
 
-	void log_func (int log_fd, char * log_phrase, size_t size);
+	void bytes_log (int log_fd, unsigned long bytes, size_t size);
 
 	void broad_log (int pipe_fd, int log_fd, char * message, size_t size);
 

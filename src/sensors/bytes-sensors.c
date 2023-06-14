@@ -63,12 +63,15 @@ int main(int argc, char * argv[]){
 	// Inizializzazione della stringa di input che rappresenta l'insieme di byte
   // da trasmettere alla central-ECU da parte del processo.
   // Il +1 e` necessario per inserirvi il carattere di terminazione riga '\n'.
-	char input_bytes[INPUT_LEN + 1];
-  input_bytes[INPUT_LEN] = '\n';
+  char input_str[INPUT_LEN];
+	char * input_hexa = malloc ((INPUT_LEN *2) +1);
+	input_hexa[INPUT_LEN *2] = '\n';
 
 	while (1) {
-		if( (read(input_fd, input_bytes, INPUT_LEN)) == INPUT_LEN )
-			broad_log(comm_fd, log_fd, input_bytes, INPUT_LEN + 1);
+		if( (read(input_fd, input_str, INPUT_LEN)) == INPUT_LEN ){
+			input_hexa = hex(atoll(input_str));
+			broad_log(comm_fd, log_fd, input_hexa, INPUT_LEN + 1);
+		}
 		sleep(1);
   }
 }

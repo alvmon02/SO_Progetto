@@ -37,20 +37,25 @@ short int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 	return (fd = open(pipe_pathname, flags));
 }
 
-// Funzione per l'invio di messaggi tramite pipe
-void broadcast_input (int pipe_fd, char * message, size_t size){
-	write (pipe_fd, message, size);
+#define BYTES_LEN 16
+char * hex (unsigned long bytes){
+	char * hex_str = malloc(BYTES_LEN +1);
+	sprintf(hex_str, "%.16llX", bytes);
+	return hex_str;
 }
+
 // Funzione per la scrittura di frasi nel log file
-void log_func (int log_fd, char * log_phrase, size_t size) {
-	write(log_fd, log_phrase, size);
+void bytes_log (int log_fd, unsigned long bytes, size_t size) {
+	char log_bytes[BYTES_LEN + 1];
+	sprintf(log_bytes, "%.16lX", bytes);
+	write (log_fd, log_bytes, size);
 }
 
 // Funzione per l'esecuzione sequenziale di invio tramite pipe di un messaggio
 // e la scrittura dello stesso nel log file.
 void broad_log (int pipe_fd, int log_fd, char * message, size_t size){
-	broadcast_input(pipe_fd, message, size);
-	log_func(log_fd, message, size);
+	write (pipe_fd, message, size);
+	write (log_fd,	message, size);
 }
 
 // str_toupper restituise la stringa in input str come una stringa
