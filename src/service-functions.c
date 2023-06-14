@@ -1,17 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <ctype.h>
 #include "../include/service-functions.h"
 
-short int initialize_socket(char * sock_pathname, int domain, int type, int
-queue_len){
+short int initialize_socket(char * sock_pathname, int domain, int type, int queue_len){
 	short int fd;
 	unlink(sock_pathname);
 	fd = socket(domain, type, 0);
@@ -38,10 +27,15 @@ short int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 }
 
 #define BYTES_LEN 16
-char * hex (unsigned long bytes){
+char * hex (unsigned long long bytes){
 	char * hex_str = malloc(BYTES_LEN +1);
 	sprintf(hex_str, "%.16llX", bytes);
 	return hex_str;
+}
+
+// Funzione per la lettura di messaggi tramite pipe
+void read_output (int fd, char * message_out, size_t size){
+	read (fd, message_out, size);
 }
 
 // Funzione per la scrittura di frasi nel log file
