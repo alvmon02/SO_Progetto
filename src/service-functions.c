@@ -1,3 +1,14 @@
+/*Inclusione delle librerie necessarie*/
+#include <stdio.h>  /*per sprintf, getline */
+#include <stdlib.h> /*per funzione exit*/
+#include <fcntl.h>  /*per open*/
+#include <unistd.h> /*per sistem calls e pipe*/
+#include <errno.h>  /*per funzione perror*/
+#include <string.h> /*per funzione strlen*/
+#include <ctype.h> /*per la funzione toupper*/
+#include <sys/stat.h>  /*per mknod (sys call per mkfifo)*/
+#include <sys/socket.h> /*per socket tipi*/
+#include <sys/un.h> /*per la conessione UNIX_SOCKET*/
 #include "../include/service-functions.h"
 
 short int initialize_socket(char * sock_pathname, int domain, int type, int queue_len){
@@ -26,23 +37,20 @@ short int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 	return (fd = open(pipe_pathname, flags));
 }
 
-#define BYTES_LEN 16
-char * hex (unsigned long long bytes){
-	char * hex_str = malloc(BYTES_LEN +1);
-	sprintf(hex_str, "%.16llX", bytes);
-	return hex_str;
-}
-
 // Funzione per la lettura di messaggi tramite pipe
 void read_output (int fd, char * message_out, size_t size){
 	read (fd, message_out, size);
 }
 
-// Funzione per la scrittura di frasi nel log file
-void bytes_log (int log_fd, unsigned long bytes, size_t size) {
-	char log_bytes[BYTES_LEN + 1];
-	sprintf(log_bytes, "%.16lX", bytes);
-	write (log_fd, log_bytes, size);
+void hex ( unsigned char* to_conv, size_t size, char* converted){
+	for (int i = 0; i < size; i++){
+		converted[2*i] = to_conv[i]/16 + 48;
+		converted[(2*i) + 1] = to_conv[i]%16 + 48;
+		if(converted[2*i] > 57)
+			converted[2*i] += 7;
+		if(converted[(2*i) + 1] > 57)
+			converted[(2*i) + 1] += 7;
+	}
 }
 
 // Funzione per l'esecuzione sequenziale di invio tramite pipe di un messaggio
