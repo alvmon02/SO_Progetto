@@ -19,7 +19,7 @@
 // Gli argomenti richiesti sono il nome della della modalità di esecuzione
 // e il nome della componente da simulare.
 // Metodo di utilizzo:
-// ./bytes-sensors NORMALE/ARTIFICIALE RADAR/CAMERAS/ASSIST
+// ./bytes-sensors "NORMALE"/"ARTIFICIALE" "RADAR"/"CAMERAS"
 int main(int argc, char * argv[]){
 
 	// Verifica della corretta chiamata del processo

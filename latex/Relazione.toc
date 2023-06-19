@@ -1,0 +1,16 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {part}{Presentazione}{1}{section*.1}%
+\contentsline {paragraph}{Titolo}{1}{section*.2}%
+\contentsline {paragraph}{Autori}{1}{section*.3}%
+\contentsline {paragraph}{Obbiettivo}{1}{section*.4}%
+\contentsline {part}{Introduzione}{1}{section*.5}%
+\contentsline {paragraph}{Introduzione al progetto}{1}{section*.6}%
+\contentsline {paragraph}{Impostazione del lavoro}{2}{section*.7}%
+\contentsline {part}{Specifiche}{2}{section*.8}%
+\contentsline {paragraph}{Caratteristiche HW e SW}{2}{section*.9}%
+\contentsline {paragraph}{Istruzioni compilazione ed esecuzione}{2}{section*.10}%
+\contentsline {paragraph}{Elementi facoltativi}{2}{section*.11}%
+\contentsline {part}{Descrizione architettura sistema}{3}{section*.12}%
+\contentsline {paragraph}{Implementazione componenti}{4}{section*.13}%
+\contentsline {paragraph}{Gerarchia del programma}{4}{section*.14}%

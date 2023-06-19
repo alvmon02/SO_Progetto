@@ -19,8 +19,9 @@ struct process {
 	int pipe_fd;
 };
 
+int speed; // credo dovrebbe essere global o static
+
 int main(){
-	int speed; // credo dovrebbe essere global o static
 
 	struct process brake_process = brake_init();
 	int steer_pipe_fd = steer_init(brake_process.pgid);
@@ -64,9 +65,9 @@ struct process brake_init () {
 int steer_init (pid_t actuator_group) {
 	pid_t steer_pid;
 	if(!(steer_pid = fork()))
-		execl("./steer-by-wire", NULL);
+		execl("../bin/steer-by-wire","steer-by-wire",  NULL);
 	else{
-		int pipe_fd = initialize_pipe("../temp/steer.pipe", O_WRONLY, 0660);
+		int pipe_fd = initialize_pipe("../tmp/steer.pipe", O_WRONLY, 0660);
 		setpgid(steer_pid, actuator_group);
 		return pipe_fd;
 	}
@@ -75,9 +76,9 @@ int steer_init (pid_t actuator_group) {
 int throttle_init (pid_t actuator_group) {
 	pid_t throttle_pid;
 	if(!(throttle_pid = fork()))
-		execl("./throttle-control", NULL);
+		execl("../bin/throttle-control", NULL);
 	else {
-		int pipe_fd = initialize_pipe("../temp/throttle.pipe", O_WRONLY, 0660);
+		int pipe_fd = initialize_pipe("../tmp/throttle.pipe", O_WRONLY, 0660);
 		setpgid(throttle_pid, actuator_group);
 		return pipe_fd;
 	}
@@ -87,21 +88,21 @@ int camera_init () {
 	if(!fork())
 		execl("./windshield-camera", NULL);
 	else
-		return initialize_pipe("../temp/camera.pipe", O_RDONLY, 660);
+		return initialize_pipe("../tmp/camera.pipe", O_RDONLY, 660);
 }
 
 int radar_init () {
 	if(!fork())
 		execl("./forward-facing-radar", NULL);
 	else
-		return initialize_pipe("../temp/radar.pipe", O_RDONLY, 660);
+		return initialize_pipe("../tmp/radar.pipe", O_RDONLY, 660);
 }
 
 void hmi_init (pid_t *hmi_pipe_fd, int pipe_number) {
 	system("../hmi-input");
 	system("../hmi-output");
-	hmi_fd[READ] = initialize_pipe("../temp/hmi-input.pipe", O_RDONLY, 0660);
-	hmi_fd[WRITE] = initialize_pipe("../temp/hmi-output.pipe", O_WRONLY, 0660);
+	hmi_fd[READ] = initialize_pipe("../tmp/hmi-input.pipe", O_RDONLY, 0660);
+	hmi_fd[WRITE] = initialize_pipe("../tmp/hmi-output.pipe", O_WRONLY, 0660);
 	return;
 }
 
