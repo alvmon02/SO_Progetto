@@ -1,3 +1,14 @@
+/*Inclusione delle librerie necessarie*/
+#include <stdio.h>  /*per sprintf, getline */
+#include <stdlib.h> /*per funzione exit*/
+#include <fcntl.h>  /*per open*/
+#include <unistd.h> /*per sistem calls e pipe*/
+#include <errno.h>  /*per funzione perror*/
+#include <string.h> /*per funzione strlen*/
+#include <ctype.h> /*per la funzione toupper*/
+#include <sys/stat.h>  /*per mknod (sys call per mkfifo)*/
+#include <sys/socket.h> /*per socket tipi*/
+#include <sys/un.h> /*per la conessione UNIX_SOCKET*/
 #include "../../include/service-functions.h"
 
 int connect_to_ECU();
@@ -20,7 +31,7 @@ int main(int argc, char const *argv[])
 	if (pid != 0)
 	{
 			//Eliminazione di qualsiasi pipe con lo stesso nome
-		unlink("assist-surround.pipe");
+		unlink("../tmp/cameras.pipe");
 		
 			//Creazione della pipe per la comunicazione con il surround-view-cameras
 		park_assist_pipe_fd = initialize_pipe("assist-surround.pipe",O_RDONLY,0666);
