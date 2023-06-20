@@ -44,7 +44,7 @@ int main() {
 		scanf("%s", term_input);
 		getchar();
 		if(acceptable_input(term_input))
-			write(pipe_fd, &term_input, OUTPUT_MAX_LEN);
+			write(pipe_fd, term_input, OUTPUT_MAX_LEN);
 		else {
 			printf("Digitazione del comando errata, inserire una "
 						 "delle seguenti parole e premere invio:\n"

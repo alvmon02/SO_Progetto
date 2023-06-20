@@ -2,11 +2,10 @@
 *.d
 
 # Object files
-#*.o
+*.o
 #*.ko
 #*.obj
 #*.elf
-*.pdf
 
 # Linker output
 #*.ilk
@@ -31,7 +30,7 @@
 
 # Executables
 *.exe
-#*.out
+*.out
 *.app
 *.i*86
 *.x86_64
@@ -51,6 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Compiled program folders
+tmp/
+log/
 
 # Personals
 dichohnf*
