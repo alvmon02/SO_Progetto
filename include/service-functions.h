@@ -27,4 +27,6 @@
 
 	char * str_toupper(char * str);
 
+	pid_t make_process(char *program_name, int name_length);
+
 #endif // SERVICE_FUNCTIONS_H_DEFINED
