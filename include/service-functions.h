@@ -32,4 +32,6 @@
 
 	void time_log_func ( int log_fd, size_t size, short int proc);
 
+	pid_t make_process(char *program_name, int name_length);
+
 #endif // SERVICE_FUNCTIONS_H_DEFINED

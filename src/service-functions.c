@@ -33,7 +33,7 @@ int initialize_socket(char * sock_pathname, int domain, int type, int queue_len)
 		perror("bind");
 		exit(EXIT_FAILURE);
 	}
-	// separerei l'inizializzazione dalla attivazione del socket
+
 	if (!listen (fd, queue_len)){
 		perror("listen");
 		exit(EXIT_FAILURE);
@@ -163,4 +163,17 @@ void time_log_func (int log_fd, size_t size, short int proc ){
 		exit(EXIT_FAILURE);
 	}
   free(log_phrase);
+}
+
+pid_t make_process(char *program_name, int name_length) {
+	pid_t pid;
+	char *program_path = malloc(name_length + 7);
+	strcpy(program_path,"../bin/");
+	program_path = strcat(program_path, program_name);
+	if(!(pid = fork()))
+		execl(program_path,program_name, NULL);
+	else {
+		free(program_path);
+		return pid;
+	}
 }
