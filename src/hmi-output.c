@@ -3,8 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-// INPUT_MAX_LEN: lunghezza massima del messaggio ricevuto in input dalla
-// central-ECU, rappresenta l'output da stampare a video nel terminale di output
+// INPUT_MAX_LEN: lunghezza massima del messaggio ricevuto in input dalla central-ECU
 #define INPUT_MAX_LEN 13
 
 // La funzione main esegue le operazioni relative al componente

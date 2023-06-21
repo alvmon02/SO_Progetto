@@ -83,12 +83,10 @@ service-functions.o: $(SRC_DIR)service-functions.c $(HEADERS)service-functions.h
 central-ECU.o: $(SRC_DIR)central-ECU.c $(HEADERS)service-functions.h
 	cc -c -o$(EXECUTABLE)central-ECU.o $(SRC_DIR)central-ECU.c
 
-
 install:
 	mkdir -p bin
 	mkdir -p tmp
 	mkdir -p log
-	all
 
 clean:
 	rm -rf bin/*

@@ -40,6 +40,7 @@
 \usepackage[export]{adjustbox}
 \usepackage{cleveref}
 \usepackage{multirow}
+\usepackage{lipsum}
 
 
 
@@ -81,12 +82,11 @@
 				\textbf{Matricola} 	& 	\textbf{Cognome} 	& 	\textbf{Nome} 	& \textbf{e-mail} 					\\\toprule
 				7072181				&	Diciotti			&	Matteo			&	matteo.diciotti@stud.unifi.it	\\
 				7084379				&	Mannucci			&	Agostino		&	agostino.mannucci@stud.unifi.it	\\
-				7117731				&	Montes Anacona		&	Àlvaro			&	\dots
+				7117731				&	Montes Anacona		&	Álvaro			&	alvaro.montes@stud.unifi.it
 			\end{tabularx}
 
 		\paragraph{Obbiettivo}
-			Obiettivo del progetto è costruire un’architettura, estremamente stilizzata e rivisitata, per sistemi ADAS,
-			descrivendo possibili interazioni e alcuni comportamenti tra componenti in scenari specifici.
+			Obiettivo del progetto è costruire un’architettura, estremamente stilizzata e rivisitata, per sistemi ADAS, descrivendo possibili interazioni e alcuni comportamenti tra componenti in scenari specifici.
 
 	\part{Introduzione}
 		\paragraph{Introduzione al progetto}
@@ -102,31 +102,53 @@
 		\paragraph{Caratteristiche HW e SW}
 		Per l'implementazione sono stati utilizzati tre hardware differenti con tre sistemi operativi differenti:
 		\begin{itemize}
-			\item \textbf{ArchLinux}, vers. \dots, kernel linux \dots, architettura x86\_64
-			\item \textbf{Manjaro}, vers, \dots,kernel linux \dots, architettura x86\_64
-			\item \textbf{Ubuntu 20.04}, kernel linux \dots, architettura x86\_64
+			\item \textbf{ArchLinux}, architettura x86\_64, kernel Linux 6.1.34-1-LTS
+			\item \textbf{Manjaro 23.0.0}, architettura x86\_64, kernel Linux 5.15.114-2-MANJARO
+			\item \textbf{Ubuntu 20.04}, architettura x86\_64, kernel Linux 5.15.0-75-generic
 		\end{itemize}
 		Il progetto è stato ideato avendo come obbiettivo un programma portatile che fosse preimpostato per eseguire su di un sistema \textbf{\underline{Ubuntu Linux 22.04}}.
 		\paragraph{Istruzioni compilazione ed esecuzione}
+			Nel presente paragrafo si mostrano i passaggi necessari affinche si possa eseguire il programma sul proprio dispositivo:
+			\subparagraph{Estrazione e compilazione}
+				\begin{enumerate}
+					\item Estrarre il file .zip in una cartella a piacimento. (Esempi comando: \texttt{tar~-x~\$PROJECT\_NAME\$; \texttt{7z~x~\$PROJECT\_NAME\$}});
+					\item Spostarsi nella cartella creatasi con l'estrazione. (Esempio comando: \texttt{cd~./\$PROJECT\_NAME\_FOLDER\$});
+					\item Eseguire il comando di installazione e la compilazione del programma \texttt{make install}.
+				\end{enumerate}
+				Terminata questa procedura il programma dovrebbe risultare pronto per l'esecuzione.
+				\subparagraph{Esecuzione}
+					\begin{enumerate}
+						\item Assicurarsi di essere con un terminale nella directory sorgente del programma, la stessa contenente le cartelle bin, src, include etc. e il file eseguibile ADAS-simulator.
+						\item Avviare l'inizializzazione e l'esecuzione del programma tramite la chiamata di \texttt{./ADAS-simulator \$MODALITÀ\$}, dove \texttt{\$MODALITÀ\$} rappresenta la modalità \texttt{ARTIFICIALE} o \texttt{NORMALE} del programma\footnote{Per la comprensione delle differenze delle modalita di esecuzione riferirsi al paragrafo 4 della richiesta \textit{Allegato\_01.pdf}}. Oltre al secondo argomento (il quale risulta obbligatorio, pena la mancata esecuzione del programma e la restituzione di un errore), il comando supporta anche l'opzione \texttt{$--$term} nella quale si può specificare l'emulatore di terminale che si desidera visualizzare come terminale di output. L'emulatore impostato di default è gnome-teminal.
+						\item Eseguito il comando dovrebbe aprirsi automaticamente un nuovo terminale rappresentante il terminale di output. Non eseguire alcun comando sul terminale di output e posizionarsi sul terminale di input, ovvero il terminale nel quale è stato eseguito il comando di avvio del programma.
+						\item Il programma è inizializzato, si possono quindi eseguire i comandi INIZIO, PARCHEGGIO per iniziare l'esecuzione del programma e successivamente ARRESTO per simulare un arresto del veicolo\footnote{Per la comprensione dei comandi inseribili dal terminale rifarsi al paragrafo 2, sotto-paragrafo \textit{Human-Machine Interface}, della richiesta \textit{Allegato\_01.pdf}}.
+				\end{enumerate}
+
+				\begin{figure}[b!]
+					\includegraphics[scale=0.8, center]{./include/SO_Progetto_Diagrammi-Gerarchia.pdf}
+					\caption{In figura è mostrata la gerarchia implementata nel programma, nel quale la \textit{central-ECU} rappresenta il processo antenato di tutte gli altri processi.}
+					\label{fig:gerarchia}
+				\end{figure}
+
 		\paragraph{Elementi facoltativi}
-			La tabella seguente mostra gli elementi facoltativi implementati seguiti da una breve descrizione dell'implementazione.
+			La tabella a pagina~\pageref{tab:facoltativi} mostra gli elementi facoltativi implementati seguiti da una breve descrizione dell'implementazione.
 			\begin{tcolorbox}[width=\textwidth,colback={Cornsilk2}]
 				\begin{tabularx}{\textwidth}{lXcX}
-					\textbf{\#}	&	\textbf{Elemento facoltativo}	&	\textbf{Realizzato (SI/NO)}	&	\textbf{Descriizone dell'implementazione con indicazione del metodo/i principale/i} \\\toprule\vspace{.1cm}
-					\multirow{8}*{1}	&	Ad ogni accelerazione, c’è una probabilità di $10^{-5}$ che l’acceleratore fallisca. In tal caso, il componente \textit{throttle control} invia un \underline{segnale} alla \textit{Central ECU} per evidenziare tale evento, e la Central ECU avvia la procedura di \textit{ARRESTO} & \multirow{8}*{SI} & \dots \\\vspace{0.1cm}
-					\multirow{2}*{2}	&	Componente \textit{forward facing radar}	&	\multirow{2}*{SI}	&	\dots	\\\vspace{0.1cm}
-					\multirow{5}*{3}	&	Quando si attiva l’interazione con park assist, la \textit{Central ECU} sospende (o rimuove) tutti i sensori e attuatori, tranne \textit{park assist} e \textit{surround view cameras}	&	\multirow{5}*{SI}	&	\dots	\\\vspace{0.1cm}
-					\multirow{4}*{4}	&	Il componente \textit{park assist} non è generato all'avvio del sistema, ma creato dalla \textit{Central ECU} al bisogno	&	\multirow{4}*{SI}	&	\dots	\\\vspace{0.1cm}
-					\multirow{5}*{5}	&	Se il componente \textit{surround view cameras} è implementato, \textit{park assist} trasmette a \textit{Central ECU} anche i byte ricevuti da \textit{surround view cameras}	&	\multirow{5}*{SI}	&	\dots	\\\vspace{0.1cm}
-					\multirow{2}*{6}	&	Componente \textit{surround view cameras}	&	\multirow{2}*{SI}	&	\dots	\\\vspace{0.1cm}
-					\multirow{7}*{7}	&	Il comando di \textit{PARCHEGGIO} potrebbe arrivare mentre i vari attuatori stanno eseguendo ulteriori comandi (accelerare o sterzare). I vari attuatori interrompono le loro azioni, per avviare le procedure di parcheggio	&	\multirow{7}*{SI}	&	\dots	\\
-					\multirow{6}*{8}	&	Se la \textit{Central ECU }riceve il segnale di fallimento accelerazione da \textit{throttle control}, imposta la velocità a 0 e invia all'output della \textit{HMI} un messaggio di totale terminazione dell'esecuzione	&	\multirow{6}*{SI}	&	\dots
+					\textbf{\#}	&	\textbf{Elemento facoltativo}	&	\textbf{Realizzato (SI/NO)}	&	\textbf{Descrizione dell'implementazione con indicazione del metodo/i principale/i} \\\toprule\vspace{.1cm}
+					1	&	Ad ogni accelerazione, c’è una probabilità di $10^{-5}$ che l’acceleratore fallisca. In tal caso, il componente \textit{throttle control} invia un \underline{segnale} alla \textit{central ECU} per evidenziare tale evento, e la Central ECU avvia la procedura di \textit{ARRESTO} & SI	&	Metodo: throttle-control $\rightarrow$ throttle\_failed(). Il metodo, tramite la funzione \texttt{rand()} della \texttt{libc} ottiene un numero aleatorio il cui modulo per 10000 simula una probabilita del 1 su $10^5$ se eguagliato a 0\footnote{La probabilita non risulta esattamente $10^-5$ dato l'intervallo di valori producibili da \texttt{rand()}, ma la differenza dovrebbe essere trascurabile ai fini del progetto.} \\\vspace{0.1cm}
+					2	&	Componente \textit{forward facing radar}	&	SI	&	Sorgente \textit{bytes-sensors.c}. Il processo esegue un ciclo infinito di letture, invii e scritture su file di log.\\\vspace{0.1cm}
+					3	&	Quando si attiva l’interazione con park assist, la \textit{Central ECU} sospende (o rimuove) tutti i sensori e attuatori, tranne \textit{park assist} e \textit{surround view cameras}	&	SI	&	Metodo: \textit{central-ECU }$\rightarrow$ \dots. La metodo invia un segnale di terminazione immediata a tutti gli attuatori e ai sensori diversi da quelli specificati.\\\vspace{0.1cm}
+					4	&	Il componente \textit{park assist} non è generato all'avvio del sistema, ma creato dalla \textit{Central ECU} al bisogno	&	\multirow{4}*{SI}	&	La \textit{central-ECU} esegue la \texttt{fork} per la creazione di \textit{park-assist} in \dots	\\\vspace{0.1cm}
+					5	&	Se il componente \textit{surround view cameras} è implementato, \textit{park assist} trasmette a \textit{Central ECU} anche i byte ricevuti da \textit{surround view cameras}	&	SI	&	Nel ciclo principale di \textit{park-assit} si esegue una \texttt{read} da \textit{surround-view} e una \texttt{write} dei dati ricevuti sul pipe \textit{assist.pipe} \\\vspace{0.1cm}
+					6	&	Componente \textit{surround view cameras}	&	SI	&	Sorgente \textit{bytes-sensors.c}. Vedi facoltativo 2 - \textit{forward facing radar}	\\\vspace{0.1cm}
+					7	&	Il comando di \textit{PARCHEGGIO} potrebbe arrivare mentre i vari attuatori stanno eseguendo ulteriori comandi (accelerare o sterzare). I vari attuatori interrompono le loro azioni, per avviare le procedure di parcheggio	&	SI	&	Nella \textit{central-ECU}, metodo \dots, si esegue segnalazione di interruzione immediata che interrompe immediatamente i processi.\\
+					8	&	Se la \textit{Central ECU }riceve il segnale di fallimento accelerazione da \textit{throttle control}, imposta la velocità a 0 e invia all'output della \textit{HMI} un messaggio di totale terminazione dell'esecuzione	&	SI	&	Nella \textit{central-ECU}, una volta ricevuto il segnale di \textit{PERICOLO} si esegue la procedura di arresto e si termina l'esecuzione \dots
 				\end{tabularx}
 				\label{tab:facoltativi}
 			\end{tcolorbox}
 
 	\part{Descrizione architettura sistema}
-		Nella sezione viene presentata l'architettura del progetto e le scelte implementative prese, cercando di descrivere i motivi che hanno portato alle singole decisioni prese.
+		Nella seguente sezione viene presentata l'architettura del progetto e le scelte implementative prese, cercando di descrivere i motivi che hanno portato alle singole decisioni prese.
 
 		\paragraph{Implementazione componenti}
 			\footnotesize Segue una tabella nella quale si mostrano quali sorgenti implementano le componenti
@@ -154,22 +176,27 @@
 			La gerarchia del progetto è stata ottenuta dalla richiesta cercando di massimizzare la semplicità.\\
 			Questa rappresenta lo scheletro del progetto e definisce quindi il flusso di lavoro dello stesso. In particolare si può notare in figura~\ref{fig:gerarchia} che esistono due soli processi che inizializzano dei figli, ovvero l'unita di controllo centrale \textit{central-ECU}, che rappresenta anche il programma genitore di tutto il sistema, e \textit{park-assist}, che inizializza il suo unico figlio \textit{surround-view cameras}.\\
 			È stato scelto di rendere l'unità di controllo genitore di tutto il sistema dato essere in collegamento con la quasi totalità dei processi agenti, cosicché il sistema fosse interamente inizializzato in un solo intervallo temporale da un unico processo.\\
-			Infatti, nella \textit{central-ECU} vengono immediatamente inizializzati i pipe, dopodiché vengono eseguite varie \texttt{fork} per la creazione e la connessione in lettura/scrittura ai pipe degli attuatori, dei componenti della \textit{Human-Machine Interface} e i sensori \textit{front windshield camera} e \textit{forward facing radar}. L'unico componente figlio della \textit{central-ECU} non immediatamente inizializzato rimane \textit{park-assist}\footnote{La decisione di non inizializzare il componente immediatamente deriva dalla richiesta, ovvero dall'elemento facoltativo numero 4. Vedi la tabella~\ref{tab:facoltativi}.} il quale verrà messo in esecuzione dalla stessa unità di controllo quando questa riceverà un comando di \textit{PARCHEGGIO} dall'interfaccia oppure dal sensore \textit{windshield}.\\
-			Per limitare il tempo di inizializzazione della componente \textit{park assist}, che a sua volta deve inizializzare il figlio \textit{suround-view cameras} al proprio avvio e che quindi richiede qualche istante di tempo, e per poter mantenere semplice la struttura del sistema è stato deciso di rendere la \textit{central-ECU} "server" nella connessione socket tra questa e \textit{park assist}. In questo modo l'unità di controllo inizializzerà il server/socket \texttt{assist.sock} al momento dell'inizializzazione del sistema, non rendendo però necessario avviare la componente \textit{park assist} fintantoché non ve ne sarà bisogno. Quando questa verrà avviata dovrà solo mettersi in connessione con la socket già creata precedentemente, risparmiando il tempo di inizializzazione della stessa.\footnote{Sebbene possa sembrare contro-intuitivo che la componente \textit{park assist} rappresenti il client della connessione clinet/server (dato che sembrerebbe essere proprio \textit{park assist} a svolgere un servizio per l'unità di controllo) risulta molto conveniente rendere la \textit{central-ECU} il server poiché, essendo il canale comunicativo esclusivo per i due processi, non modifica il comportamento del sistema e rende l'inizializzazione del figlio più rapida.}
+			Infatti nella \textit{central-ECU} vengono immediatamente inizializzati i pipe, dopodiché vengono eseguite varie \texttt{fork} per la creazione e la connessione in lettura/scrittura ai pipe degli attuatori, delle due componenti relative alla \textit{Human-Machine Interface} ed infine i due sensori \textit{front windshield camera} e \textit{forward facing radar}. L'unico componente figlio della \textit{central-ECU} non immediatamente inizializzato rimane \textit{park-assist}\footnote{La decisione di non inizializzare il componente immediatamente deriva dalla richiesta, ovvero dall'elemento facoltativo numero 4. Vedi la tabella di pagina~\pageref{tab:facoltativi}.} il quale verrà messo in esecuzione dalla stessa unità di controllo quando questa riceverà un comando di \textit{PARCHEGGIO} dall'interfaccia oppure dal sensore \textit{windshield}.\\
+			Per limitare il tempo di inizializzazione della componente \textit{park assist}, che a sua volta deve inizializzare il figlio \textit{suround-view cameras} al proprio avvio e che quindi richiede qualche istante di tempo, e per poter mantenere semplice la struttura del sistema è stato deciso di rendere la \textit{central-ECU} "server" nella connessione socket tra questa e \textit{park assist}. In questo modo l'unità di controllo inizializzerà il server/socket \texttt{assist.sock} al momento dell'inizializzazione del sistema, non rendendo però necessario avviare la componente \textit{park assist} fintantoché non ve ne sarà bisogno. Quando questa verrà avviata dovrà solo mettersi in connessione con la socket già creata precedentemente, risparmiando il tempo di inizializzazione della stessa.\footnote{Sebbene possa sembrare contro-intuitivo che la componente \textit{park assist} rappresenti il client della connessione clinet/server (dato che sembrerebbe essere proprio \textit{park assist} a svolgere un servizio per l'unità di controllo) risulta molto conveniente rendere la \textit{central-ECU} il server poiché, essendo il canale comunicativo esclusivo per i due processi, non modifica il comportamento del sistema e rende l'inizializzazione del figlio più rapida.}\\
+			All'avvio della procedura di parcheggio, quindi, la \textit{central-ECU} avvierà la componente \textit{park-assist}, la quale si connetterà alla socket e inizializzerà \textit{surround-view-cameras}. Le due componenti leggeranno per i 30 secondi successivi dati da sorgenti binarie e se in queste non risulteranno particolari pattern\footnote{Per conoscere i pattern binari (espressi in codifica esadecimale) prendere visione del paragrafo 2, sotto-paragrafo \textit{Componente central-ECU} della richiesta \textit{Allegato\_01.pdf}} allora l'esecuzione del parcheggio risulterà conclusa e il processo terminerà con successo, in caso invece almeno uno dei pattern succitati dovesse essere presente nei dati acquisiti dalle componenti allora la procedura di parcheggio terminerà immediatamente, ovvero non appena le uguaglianze vengono evidenziate, e si riavvierà immediatamente la procedura di parcheggio.
 
+		\paragraph{IPC nel sistema}
+			In figura~\ref{fig:comunicazione}, a pagina~\pageref{fig:comunicazione}, si mostra una schematizzazione molto stilizzata della rete comunicativa del sistema.
+			Il metodo di comunicazione maggiormente sfruttato all'interno del sistema è indubbiamente il \textbf{pipe} il quale struttura 8 canali di comunicazione su 9 (segnali esclusi). Il motivo della scelta dei \textbf{pipe} a discapito di altri metodi risiede nel fatto che le comunicazioni sono sostanzialmente unidirezionali (sensori $\rightarrow$ unità di controllo, unità di controllo $\rightarrow$ attuatori, con due evidenti eccezioni di \textit{park assist} e di \textit{surround-view-cameras}). La scelta ha permesso di implementare un sistema relativamente semplice, con un'unica \textbf{socket}, struttura più complessa da implementare e gestire.\\
+			Il protocollo di gestione dei canali risulta unico per tutte le tipologie di canali e per tutti i processi: il processo padre, l'unico processo che comunica con i propri processi figli, produce ed inizializza correttamente il file \texttt{.pipe} o \texttt{.sock} (rappresentante socket \texttt{UNIX}) nella directory \textit{tmp} (dopo aver avuto l'accortezza di eliminare creazioni pendenti da vecchie esecuzioni tramite un \texttt{unlink}), il processo figlio si connette con  l'adeguata procedura, differente tra pipe e socket, al canale di comunicazione nella fase inizializzazione del processo. Se la connessione non dovesse riuscire (se la \texttt{open} o la \texttt{connect} dovessero terminare con un errore) il figlio terminerebbe con codice di errore \texttt{EXIT\_FAILURE} e stamperebbe lo stack dell'errore nello \textit{stderr}.\\
+			Per l'implementazione del parcheggio il canale di comunicazione assume sembianze di una socket per evitare di dover terminare il programma \textit{park-assist} ogni volta che la \textit{central-ECU} riceve da questo uno dei pattern non ammissibili, che simulano una situazione di parcheggio non accettabile. Il protocollo prevede che ad ogni ciclo \textit{park assist} riceva da \textit{surround-view cameras} i byte da inviare alla \textit{central-ECU} e che li invii, assieme da quelli letti dalla sorgente binaria. Se, eseguito l'invio, riceve dalla \textit{central-ECU} un messaggio che indica la necessit di riavvio, allora \dots
 			\begin{figure}[t]
-				\includegraphics[scale=0.6, center]{./include/SO_Progetto_Diagrammi-Gerarchia.png}
-				\caption{ In figura è mostrata la gerarchia implementata nel programma, nel quale la \textit{central-ECU} rappresenta il processo antenato di tutte gli altri processi.}
-				\label{fig:gerarchia}
-			\end{figure}
-
-
-
-			\begin{figure}[h]
-				\includegraphics[scale=0.6, center]{./include/SO_Progetto_Diagrammi-Comunicazione.png}
-				\caption{ In figura è mostrata la .}
+				\includegraphics[scale=0.9, center]{./include/SO_Progetto_Diagrammi-Comunicazione.pdf}
+				\caption{In figura sono rappresentati tutti e soli i percorsi comunicativi inseriti nel sistema: sono presenti 9 pipe e 15 percorsi di segnalazioni inviate dai processi del sistema ad altri processi dello stesso.}
 				\label{fig:comunicazione}
 			\end{figure}
+		\paragraph{Gestione dei log}
+			\lipsum
+
+
+
+
+
 
 
 			\newpage

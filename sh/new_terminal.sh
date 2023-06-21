@@ -1,6 +1,10 @@
 #!/bin/bash
 
-echo "--- Opening output shell ---"
-echo
-gnome-terminal --geometry=81x40-1 -- bash -c "../bin/hmi-output; exec bash"
+TERM_LAUNCH=gnome-terminal;
+if (($BASH_ARGC>0));
+then TERM_LAUNCH=${BASH_ARGV[0]};
+fi
+echo $TERM_LAUNCH;
+echo ${BASH_ARGC};
+$TERM_LAUNCH -- bash -c "./bin/hmi-output; exec bash"
 

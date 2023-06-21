@@ -10,7 +10,11 @@
 \contentsline {part}{Specifiche}{2}{section*.8}%
 \contentsline {paragraph}{Caratteristiche HW e SW}{2}{section*.9}%
 \contentsline {paragraph}{Istruzioni compilazione ed esecuzione}{2}{section*.10}%
-\contentsline {paragraph}{Elementi facoltativi}{2}{section*.11}%
-\contentsline {part}{Descrizione architettura sistema}{3}{section*.12}%
-\contentsline {paragraph}{Implementazione componenti}{4}{section*.13}%
-\contentsline {paragraph}{Gerarchia del programma}{4}{section*.14}%
+\contentsline {subparagraph}{Estrazione e compilazione}{2}{section*.11}%
+\contentsline {subparagraph}{Esecuzione}{2}{section*.12}%
+\contentsline {paragraph}{Elementi facoltativi}{3}{section*.14}%
+\contentsline {part}{Descrizione architettura sistema}{4}{section*.15}%
+\contentsline {paragraph}{Implementazione componenti}{5}{section*.16}%
+\contentsline {paragraph}{Gerarchia del programma}{5}{section*.17}%
+\contentsline {paragraph}{IPC nel sistema}{6}{section*.18}%
+\contentsline {paragraph}{Gestione dei log}{6}{section*.20}%

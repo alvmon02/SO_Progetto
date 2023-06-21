@@ -83,10 +83,6 @@ int main(int argc, char * argv[]){
 	// per ASSIST occorrerà inviare un segnale di interruzione dopo 30
 	// secondi per interrompere la lettura e l'invio dei dati.
 	while (1) {
-		if( read(input_fd, input_str, INPUT_LEN) == INPUT_LEN ){
-			hex(input_str, INPUT_LEN, input_hex);
-			broad_log(comm_fd, log_fd, input_hex, (INPUT_LEN *2) + 1);
-		}
-		sleep(1);
+		read_conv_broad(input_fd, input_str, input_hex, comm_fd, log_fd);
   }
 }

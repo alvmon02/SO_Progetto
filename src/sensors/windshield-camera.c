@@ -10,9 +10,9 @@
 #define INPUT_MAX_LEN 11
 
 // File descriptor del log file
-short int log_fd;
+int log_fd;
 // File descriptor del pipe in scrittura
-short int pipe_fd;
+int pipe_fd;
 
 //La funzione main esegue le operazioni relative al componente windshield-camera
 int main ( ) {
@@ -22,19 +22,34 @@ int main ( ) {
   // durante la fase di inizializzazione del processo central-ECU e che venga
   // aperto in sola scrittura dal processo windshield-camera il quale vi scriva
   // una volta al secondo.
-  pipe_fd = open("../tmp/camera.pipe", O_WRONLY);
+  if((pipe_fd = open("../tmp/camera.pipe", O_WRONLY))){
+    perror("open pipe");
+    exit(EXIT_FAILURE);
+  }
   // Connessione del file descriptor del log file. Apertura in sola scrittura.
   // Qualora il file non esista viene creato. Qualora il file sia presente
   // si mantengono le precedenti scritture. Data l'esecuzione dell'unlink
   // da parte della central-ECU, non vi saranno scritture pendenti da
   // precedenti esecuzioni.
-  log_fd = open("../log/camera.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
+  if((log_fd = open("../log/camera.log", O_WRONLY | O_APPEND | O_CREAT, 0644))){
+    perror("open log");
+    exit(EXIT_FAILURE);
+  }
   // Inizializzazione e connessione del file descriptor al file da cui
   // ottenere i dati di input. Apertura in sola lettura all'inizio del file.
-  int input_file = open("../include/frontCamera.data", O_RDONLY);
+  int input_fd;
+  if((input_fd = open("../include/frontCamera.data", O_RDONLY))){
+    perror("open input");
+    exit(EXIT_FAILURE);
+  }
+
   // Inizializzazione della stringa di input che rappresenta il messaggio da
   // trasmettere alla central-ECU da parte del processo.
   char *camera_input = malloc(INPUT_MAX_LEN);
+  if(camera_input == NULL){
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
   int nread;
 
   // Il ciclo successivo rappresenta il cuore del processo.
@@ -44,9 +59,14 @@ int main ( ) {
   // Fintantoché il file non termina i dati vengono trasmessi alla
   // central-ECU, una volta terminato il processo termina con codice
   // EOF (=0).
-  while ((nread = read(input_file, &camera_input, INPUT_MAX_LEN)) > 0) {
-    broad_log(pipe_fd, log_fd, camera_input, INPUT_MAX_LEN);
-    sleep(1);
+  while (1) {
+    if((nread = read(input_fd, camera_input, INPUT_MAX_LEN)) < 0){
+      perror("read");
+      exit(EXIT_FAILURE);
+    } else if (nread){
+      broad_log(pipe_fd, log_fd, camera_input, INPUT_MAX_LEN);
+      sleep(1);
+    } else
+      exit(EXIT_SUCCESS);
   }
-  exit(EOF);
 }

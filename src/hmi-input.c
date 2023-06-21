@@ -6,8 +6,7 @@
 #include <string.h>
 #include "../include/service-functions.h"
 
-// OUTPUT_MAX_LEN: lunghezza massima del messaggio ricevuto in input da
-// tastiera che equivale all'output della funzione main verso la central-ECU
+// OUTPUT_MAX_LEN: lunghezza massima del messaggio ricevuto in input da tastiera
 #define OUTPUT_MAX_LEN 11
 
 bool acceptable_input ( char * );
@@ -34,11 +33,12 @@ int main() {
 				 "PARCHEGGIO\n"
 				 "ARRESTO\n");
 
-	// Il ciclio successivo rappresenta il cuore del processo.
+	// Il ciclo successivo rappresenta il cuore del processo.
 	// Il processo si mette in attesa di una stringa da parte
-	// dello stdin (scanf) e una volta ottenuto controlla il comando,
-	// se questo e` acettabile lo trasmette alla central-ECU, altrimenti
-	// si mette in attesa di un nuovo comando.
+	// dello stdin (scanf) e una volta ottenuta la controlla per
+	//rilevare se corrisponde ad un comando accettabile per il sistema e,
+	// in caso di compatibilita, lo trasmette alla central-ECU,
+	// altrimenti si mette in attesa di un nuovo comando.
 	// L'inserimento del comando e` stato reso case insensitive
 	while(1){
 		scanf("%s", term_input);
