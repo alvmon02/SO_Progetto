@@ -22,7 +22,7 @@ short int initialize_socket(char * sock_pathname, int domain, int type, int queu
 		perror("bind");
 		exit(EXIT_FAILURE);
 	}
-	// separerei l'inizializzazione dalla attivazione del socket
+
 	if (!listen (fd, queue_len)){
 		perror("listen");
 		exit(EXIT_FAILURE);
@@ -66,4 +66,18 @@ char * str_toupper(char * str) {
 	for(char * p = str; *p != 0; p++)
 		*p = toupper(*p);
 	return str;
+}
+
+// DA FARE MAKE_PROCESS CHE POI E' DA SOSTITUIRE IN TUTTE LE INIT DEI VARI COMPONENTI
+pid_t make_process(char *program_name, int name_length) {
+	pid_t pid;
+	char *program_path = malloc(name_length + 7);
+	strcpy(program_path,"../bin/");
+	program_path = strcat(program_path, program_name);
+	if(!(pid = fork()))
+		execl(program_path,program_name, NULL);
+	else {
+		free(program_path);
+		return pid;
+	}
 }
