@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -8,11 +9,19 @@
 #include <sys/stat.h>
 #include <linux/random.h>
 #include <sys/ioctl.h>
+#include <stdbool.h>
+#include <signal.h>
 #include "../../include/service-functions.h"
 
 // MACROS
 // INPUT_LEN: numero fisso di byte da leggere dall'input
 #define INPUT_LEN 8
+
+void signal_stop_handler( int );
+void signal_continue_handler( int );
+
+	int log_fd;
+	int comm_fd;
 
 // Funzione main che opera le operazioni per le componenti forward-facing-radar,
 // surround-view-cameras e per il ciclo principale di park-assist.
@@ -28,6 +37,8 @@ int main(int argc, char * argv[]){
 		exit(EXIT_FAILURE);
 	}
 
+	signal(SIGSTOP, signal_stop_handler);
+
 	// Inizializzazione del file descriptor tramite apertura del file
 	// da cui ottenere i bytes di input.
 	// Il file aperto dipende dalla modalità di esecuzione scelta.
@@ -37,24 +48,39 @@ int main(int argc, char * argv[]){
 	else if (!strcmp(argv[1], ARTIFICIALE))
 		input_fd = open("../../urandomARTIFICIALE.binary", O_RDONLY);
 	else{
-		perror("chiamata: modalita:");
+		perror("chiamata modalita:");
 		exit(EXIT_FAILURE);
 	}
 
   // Connessione del file descriptor del log file. Apertura in sola scrittura.
   // Qualora il file non esista viene creato. Qualora il file sia presente
   // si mantengono le precedenti scritture.
-	int log_fd;
-	int comm_fd;
 	if(!strcmp(argv[2], RADAR)){
-		log_fd = open("../../log/radar.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
-		comm_fd = open("../../tmp/radar.pipe", O_WRONLY);
+		if(unlink("../../log/radar.log") < 0){
+			perror("unlink");
+			exit(EXIT_FAILURE);
+		}
+		if((log_fd = open("../../log/radar.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
+			perror("open log");
+			exit(EXIT_FAILURE);
+		}
+		if((comm_fd = open("../../tmp/radar.pipe", O_WRONLY)) < 0){
+			perror("open pipe");
+			exit(EXIT_FAILURE);
+		}
 	} else if (!strcmp(argv[2], CAMERAS)){
-		log_fd = open("../../log/cameras.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
-		comm_fd = open("../../tmp/cameras.pipe", O_WRONLY);
-	} else if (!strcmp(argv[2], ASSIST)){
-		log_fd = open("../../log/assist.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
-		comm_fd = open("../../tmp/assist.sock", O_WRONLY);
+		if(unlink("../../log/cameras.log") < 0){
+			perror("unlink");
+			exit(EXIT_FAILURE);
+		}
+		if((log_fd = open("../../log/cameras.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
+			perror("open log");
+			exit(EXIT_FAILURE);
+		}
+		if((comm_fd = open("../../tmp/cameras.pipe", O_WRONLY)) < 0){
+			perror("open pipe");
+			exit(EXIT_FAILURE);
+		}
 	} else{
 		perror("chiamata: tipologia funzione");
 		exit(EXIT_FAILURE);
@@ -82,11 +108,13 @@ int main(int argc, char * argv[]){
 	// Il ciclo e` un ciclo infinito, nel caso caso si utilizzi il processo
 	// per ASSIST occorrerà inviare un segnale di interruzione dopo 30
 	// secondi per interrompere la lettura e l'invio dei dati.
-	while (1) {
-		if( read(input_fd, input_str, INPUT_LEN) == INPUT_LEN ){
-			hex(input_str, INPUT_LEN, input_hex);
-			broad_log(comm_fd, log_fd, input_hex, (INPUT_LEN *2) + 1);
-		}
-		sleep(1);
+	while (true) {
+		read_conv_broad(input_fd, input_str, input_hex, comm_fd, log_fd);
   }
 }
+
+void signal_stop_handler(int sig) {
+	fflush(fdopen(comm_fd, "w"));
+}
+
+

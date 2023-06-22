@@ -74,7 +74,6 @@ service-functions.o: $(HEADERS)service-functions.h $(SRC_DIR)service-functions.c
 	cc -c -o$(EXECUTABLE)service-functions.o $(SRC_DIR)service-functions.c
 
 
-
 install:
 	mkdir -p tmp
 	mkdir -p log
