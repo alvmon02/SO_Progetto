@@ -142,7 +142,7 @@ void time_log_func (int log_fd, size_t size, short int proc ){
   free(log_phrase);
 }
 
-pid_t make_process(char *program_name, int name_length) {
+pid_t make_process(char *program_name, int name_length, char *args) {
 	pid_t pid;
 	char *program_path = malloc(name_length + 7);
 	if(program_path == NULL){
@@ -155,8 +155,19 @@ pid_t make_process(char *program_name, int name_length) {
 	if(pid < 0){
 		perror("fork");
 		exit(EXIT_FAILURE);
-	} else if(pid == 0)
-		execl(program_path,program_name, NULL);
+	} else if(pid == 0){
+		if(args != NULL)
+			execl(program_path,program_name, args, NULL);
+		else
+			execl(program_path,program_name, NULL);
+	}
 	free(program_path);
+	return pid;
+}
+
+pid_t make_sensor(char *program_name, char *mode) {
+	pid_t pid;
+	if(!(pid = fork()))
+		execl("../bin/bytes_sensors","bytes_sensors", mode, program_name, NULL);
 	return pid;
 }

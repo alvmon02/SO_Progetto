@@ -18,8 +18,8 @@
 	#define CAMERAS "CAMERAS"
 	#define ASSIST "ASSIST"
 	#define BYTES_LEN 8
-
-	int initialize_socket(char * sock_pathname, int domain, int type, int queue_len);
+	#define SURR_CAM_LEN 8
+	#define PARK_TIME 30
 
 	int initialize_pipe(char * pipe_pathname, int flags, mode_t mode);
 
@@ -35,6 +35,6 @@
 
 	void time_log_func ( int log_fd, size_t size, short int proc);
 
-	pid_t make_process(char *program_name, int name_length);
+	pid_t make_process(char *program_name, int name_length, char *args);
 
 #endif // SERVICE_FUNCTIONS_H_DEFINED
