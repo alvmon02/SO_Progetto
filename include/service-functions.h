@@ -10,6 +10,7 @@
 	#define CAMERAS "CAMERAS"
 	#define ASSIST "ASSIST"
 	#define SURR_CAM_LEN 8
+	#define PARK_TIME 30
 
 	short int initialize_socket(char * sock_pathname, int domain, int type, int queue_len);
 

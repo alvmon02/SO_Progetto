@@ -9,11 +9,11 @@
 #include <sys/un.h>
 #include "../include/service-functions.h"
 
-#define READ 0
-#define WRITE 1
-#define HMI_COMMAND_LENGTH 11
+#define HMI_COMMAND_LENGTH 11 
 #define RADAR_BYTES_NUMBER 8
 #define PARK_BYTES_NUMBER 8
+#define TERMINAL_NAME_MAX_LENGTH 50
+#define MOD_LENGTH 12
 
 struct pipe_process {
 	pid_t pid;
@@ -47,7 +47,27 @@ void change_speed(int, short int, short int, short int, short int);
 
 int speed = 0;
 
-int main(){
+int main(int argc, char **argv){
+
+	if(argc < 2 || argc > 4 || argc == 3) {
+		perror(" syntax error");
+		exit(EXIT_FAILURE);
+	}
+
+	if(strcmp(argv[1],ARTIFICIALE) && (strcmp(argv[1],NORMALE))) {
+		perror(" invalid input modality");
+		exit(EXIT_FAILURE);
+	}
+
+	// imposta il terminale scelto dall'utente
+	if(!(strcmp(argv[2], "--term"))) {
+		if(!fork()) {
+			char *term_command = malloc(TERMINAL_NAME_MAX_LENGTH);
+			sprintf(term_command,"./sh/new_terminal.sh %s\0", argv[3]);
+			execlp("/usr/bin/bash","bash","-c", term_command, NULL);
+		}
+	}
+
 	brake_process = brake_init();
 	int steer_pipe_fd = steer_init(brake_process.pgid);
 	int throttle_pipe_fd = throttle_init(brake_process.pgid);
@@ -119,25 +139,28 @@ int main(){
 	char park_data[PARK_BYTES_NUMBER];
 	bool parking_completed = false;
 	struct socket_process park_process;
+	park_process = park_assist_init();
 	while (!parking_completed) {
-		park_process = park_assist_init();
 		int time = 0;
-		while(time < 30) {
+		while(time < PARK_TIME) {
 			read(park_process.socket_fd, park_data, PARK_BYTES_NUMBER);
 			if(*park_data == 0x172A || *park_data == 0xD693 || *park_data == 0x0 || *park_data == 0xBDD8 || *park_data == 0xFAEE || *park_data == 0x4300)
 				break;
-			time++;
-			if(time == 30)
+			write(park_process.socket_fd, CONTINUE, 1);
+			if(++time == PARK_TIME)
 				parking_completed = true;
+		sleep(1);
 		}
-		kill(park_process.pid, SIGINT);
+		if(!parking_completed)
+			write(park_process.socket_fd, RELOAD, 1);
 	}
 
 	// TERMINO I PROCESSI DEI SENSORI E QUELLI DEGLI ATTUATORI
-	kill(sensor_signal, SIGINT);
+	kill(park_process.pid, SIGKILL);
+	kill(sensor_signal, SIGKILL);
 
 	// QUI ORA UCCIDO LA HMI
-	kill(-(processes_groups.hmi_group), SIGINT);
+	kill(-(processes_groups.hmi_group), SIGKILL);
 
 	return 0;
 }
@@ -221,4 +244,8 @@ void change_speed(int requested_speed, short int throttle_pipe_fd, short int bra
 		send_command(brake_pipe_fd, log_fd, hmi_pipe_fd, "FRENO 5", sizeof("FRENO 5"));
 		speed -= 5;
 	}
+}
+
+bool accettable_string(char *string, int length) {
+	return (bool) ((strstr(string,"172A") == NULL) && (strstr(string,"D693") == NULL) && (strstr(string,"0000") == NULL) && (strstr(string,"BDD8") == NULL) && (strstr(string,"FAEE") == NULL) && (strstr(string,"4300") == NULL));
 }
