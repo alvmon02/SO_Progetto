@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -18,32 +20,27 @@
 struct pipe_process {
 	pid_t pid;
 	pid_t pgid;
-	short int pipe_fd;
+	int pipe_fd;
 } brake_process;
 
-struct socket_process {
-	pid_t pid;
-	pid_t pgid;
-	short int socket_fd;
-};
-
 struct groups {
+	pid_t park_assist_group;
 	pid_t actuators_group;
 	pid_t sensors_group;
 	pid_t hmi_group;
 } processes_groups;
 
 struct pipe_process brake_init();
-short int steer_init(pid_t);
-short int throttle_init(pid_t);
+int steer_init(pid_t);
+int throttle_init(pid_t);
 struct pipe_process camera_init();
-short int radar_init(pid_t);
-struct socket_process park_assist_init();
-void hmi_init(struct pipe_process *, int);
+int radar_init(pid_t);
+struct pipe_process park_assist_init();
+void hmi_init(struct pipe_process *,int);
 void arrest(pid_t);
-void throttle_failure_handler (int);
-void send_command(short int, short int, short int, char *, size_t);
-void change_speed(int, short int, short int, short int, short int);
+void ECU_signal_handler(int);
+void send_command(int, int, int, char *, size_t);
+void change_speed(int, int, int, int, int);
 
 int speed = 0;
 
@@ -57,7 +54,8 @@ int main(int argc, char **argv){
 	if(strcmp(argv[1],ARTIFICIALE) && (strcmp(argv[1],NORMALE))) {
 		perror(" invalid input modality");
 		exit(EXIT_FAILURE);
-	}
+	} else
+		char modalita[MOD_LENGTH] = argv[1];
 
 	// imposta il terminale scelto dall'utente
 	if(!(strcmp(argv[2], "--term"))) {
@@ -68,6 +66,10 @@ int main(int argc, char **argv){
 		}
 	}
 
+	unmask(000);
+	int error_log_fd = open("../log/errors.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
+	dup2(stderr, error_log_fd);
+
 	brake_process = brake_init();
 	int steer_pipe_fd = steer_init(brake_process.pgid);
 	int throttle_pipe_fd = throttle_init(brake_process.pgid);
@@ -75,7 +77,7 @@ int main(int argc, char **argv){
 
 	struct pipe_process camera_process = camera_init();
 	pid_t sensor_signal = -camera_process.pgid;
-	int radar_pipe_fd = radar_init(camera_process.pgid);
+	int radar_pipe_fd = radar_init(camera_process.pgid, modalita);
 	processes_groups.sensors_group = camera_process.pgid;
 	struct pipe_process *hmi_process = malloc(2*sizeof(struct pipe_process));
 	hmi_init(hmi_process, 2);
@@ -94,7 +96,8 @@ int main(int argc, char **argv){
 	} while (strcmp(hmi_buf,"INIZIO") && strcmp(hmi_buf,"PARCHEGGIO"));
 
 	// attivo il signal handler per l'errore nell'accelerazione
-	signal(SIGUSR1, throttle_failure_handler);
+	signal(SIGUSR1, ECU_signal_handler);
+	signal(SIGUSR2, ECU_signal_handler);
 
 	char *camera_buf = malloc(HMI_COMMAND_LENGTH);
 	char *radar_buf = malloc(RADAR_BYTES_NUMBER);
@@ -139,63 +142,64 @@ int main(int argc, char **argv){
 	char park_data[PARK_BYTES_NUMBER];
 	bool parking_completed = false;
 	struct socket_process park_process;
-	park_process = park_assist_init();
+	park_process = park_assist_init(modalita);
+	processes_groups.park_assist_group = park_process.pgid;
 	while (!parking_completed) {
 		int time = 0;
 		while(time < PARK_TIME) {
-			read(park_process.socket_fd, park_data, PARK_BYTES_NUMBER);
-			if(*park_data == 0x172A || *park_data == 0xD693 || *park_data == 0x0 || *park_data == 0xBDD8 || *park_data == 0xFAEE || *park_data == 0x4300)
+			read(park_process.pipe_fd, park_data, PARK_BYTES_NUMBER);
+			if(accettable_string(park_data, PARK_BYTES_NUMBER))
 				break;
-			write(park_process.socket_fd, CONTINUE, 1);
+			write(park_process.pipe_fd, CONTINUE, 1);
 			if(++time == PARK_TIME)
 				parking_completed = true;
-		sleep(1);
+			sleep(1);
 		}
 		if(!parking_completed)
-			write(park_process.socket_fd, RELOAD, 1);
+			write(park_process.pipe_fd, RELOAD, 1);
 	}
 
 	// TERMINO I PROCESSI DEI SENSORI E QUELLI DEGLI ATTUATORI
 	kill(park_process.pid, SIGKILL);
 	kill(sensor_signal, SIGKILL);
 
-	// QUI ORA UCCIDO LA HMI
+	// QUI ORA UCCIDO LA HMI MA PRIMA VOGLIO MANDARE UN SEGNALE DIFFERENTE
 	kill(-(processes_groups.hmi_group), SIGKILL);
 
 	return 0;
 }
 
-struct pipe_process brake_init () {
+struct pipe_process brake_init() {
 	struct pipe_process brake_process;
 	brake_process.pid = make_process("brake-by-wire", 14);
 	brake_process.pgid = getpgid(brake_process.pid);
-	brake_process.pipe_fd = initialize_pipe("../tmp/brake.pipe", O_WRONLY, 660);
+	brake_process.pipe_fd = initialize_pipe("../tmp/brake.pipe", O_WRONLY, 0664);
 	return brake_process;
 }
 
-short int steer_init (pid_t actuator_group) {
-	int pipe_fd = initialize_pipe("../tmp/steer.pipe", O_WRONLY, 0660);
+int steer_init(pid_t actuator_group) {
+	int pipe_fd = initialize_pipe("../tmp/steer.pipe", O_WRONLY, 0664);
 	setpgid(make_process("steer-by-wire",14), actuator_group);
 	return pipe_fd;
 }
 
-short int throttle_init (pid_t actuator_group) {
-	int pipe_fd = initialize_pipe("../tmp/throttle.pipe", O_WRONLY, 0660);
+int throttle_init(pid_t actuator_group) {
+	int pipe_fd = initialize_pipe("../tmp/throttle.pipe", O_WRONLY, 0664);
 	setpgid(make_process("throttle-control", 17), actuator_group);
 	return pipe_fd;
 }
 
-struct pipe_process camera_init () {
+struct pipe_process camera_init() {
 	struct pipe_process camera_process;
 	camera_process.pid = make_process("windshield-camera", 18);
 	camera_process.pgid = getpgid(camera_process.pid);
-	camera_process.pipe_fd = initialize_pipe("../tmp/camera.pipe", O_RDONLY, 660);
+	camera_process.pipe_fd = initialize_pipe("../tmp/camera.pipe", O_RDONLY, 662);
 	return camera_process;
 }
 
-short int radar_init (pid_t sensors_group) {
-	setpgid(make_process("forward-facing-radar", 21), sensors_group);
-	return initialize_pipe("../tmp/radar.pipe", O_RDONLY, 660);
+int radar_init(pid_t sensors_group, char *modalita) {
+	setpgid(make_sensor("RADAR", modalita), sensors_group);
+	return initialize_pipe("../tmp/radar.pipe", O_RDONLY, 662);
 }
 
 void hmi_init(struct pipe_process *hmi_processes, int processes_number) {
@@ -204,26 +208,39 @@ void hmi_init(struct pipe_process *hmi_processes, int processes_number) {
 	(hmi_processes + READ)->pgid = getpgid((hmi_processes + READ)->pid);
 	setpgid((hmi_processes + WRITE)->pid, (hmi_processes + READ)->pgid);
 	(hmi_processes + WRITE)->pgid = getpgid((hmi_processes + READ)->pid);
-	(hmi_processes + READ)->pipe_fd = initialize_pipe("../tmp/hmi-input.pipe", O_RDONLY, 0660);
-	(hmi_processes + WRITE)->pipe_fd = initialize_pipe("../tmp/hmi-output.pipe", O_WRONLY, 0660);
+	(hmi_processes + READ)->pipe_fd = initialize_pipe("../tmp/hmi-input.pipe", O_RDONLY, 0662);
+	(hmi_processes + WRITE)->pipe_fd = initialize_pipe("../tmp/hmi-output.pipe", O_WRONLY, 0664);
 	return;
 }
 
-struct socket_process park_assist_init() {
-	struct socket_process park_process;
-	park_process.pid = make_process("park-assist", 12);
+struct pipe_process park_assist_init(char *modalita) {
+	struct pipe_process park_process;
+	park_process.pid = make_sensor("ASSIST", modalita);
 	park_process.pgid = getpgid(park_process.pid);
-	park_process.socket_fd = initialize_socket("../tmp/assist.sock", AF_UNIX, SOCK_STREAM, 5);
+	park_process.pipe_fd = initialize_pipe("../tmp/assist.pipe", O_RDONLY, 0662);
 	return park_process;
 }
 
-void throttle_failure_handler (int sig){
-	arrest(brake_process.pid);
-	// TERMINO TUTTI I PROCESSI DOPO AVER ARRESTATO LA MACCHINA
-	// NON IMPORTA UCCIDERE PARK ASSIST PERCHE' E' GIA' TERMINATO
-	kill(-(processes_groups.actuators_group), SIGKILL);
-	kill(-(processes_groups.sensors_group), SIGKILL);
-	kill(-(processes_groups.hmi_group), SIGKILL);
+void ECU_signal_handler (int sig){
+	if(sig == SIGUSR1) {
+		// significa che ha fallito l'accelerazione
+		arrest(brake_process.pid);
+		// TERMINO TUTTI I PROCESSI DOPO AVER ARRESTATO LA MACCHINA
+		// NON IMPORTA UCCIDERE PARK ASSIST PERCHE' E' GIA' TERMINATO
+		kill(-(processes_groups.actuators_group), SIGKILL);
+		kill(-(processes_groups.sensors_group), SIGKILL);
+		kill(-(processes_groups.hmi_group), SIGKILL);
+	} else if(sig == SIGUSR2) {
+		// significa che park_assist ha concluso la procedura di parcheggio
+		kill(processes_groups.park_assist_group, SIGKILL);
+		kill(sensor_signal, SIGKILL);
+		// QUI ORA UCCIDO LA HMI MA PRIMA VOGLIO MANDARE UN SEGNALE DIFFERENTE
+		kill(-(processes_groups.hmi_group), SIGUSR1);
+		unmask(022);
+		// LA SLEEP SERVE A DARE TEMPO ALLA HMI DI MOSTRARE UN MESSAGGIO PRIMA DI CHIUDERSI
+		sleep(3);
+		exit(EXIT_SUCCESS);
+	}
 }
 
 void arrest(pid_t brake_process) {
@@ -231,12 +248,12 @@ void arrest(pid_t brake_process) {
 	speed = 0;
 }
 
-void send_command(short int actuator_pipe_fd, short int log_fd, short int hmi_pipe_fd, char *command, size_t command_size) {
+void send_command(int actuator_pipe_fd, int log_fd, int hmi_pipe_fd, char *command, size_t command_size) {
 	broad_log(actuator_pipe_fd, log_fd, command, command_size);
 	write(hmi_pipe_fd, command, command_size);
 }
 
-void change_speed(int requested_speed, short int throttle_pipe_fd, short int brake_pipe_fd, short int log_fd, short int hmi_pipe_fd) {
+void change_speed(int requested_speed, int throttle_pipe_fd, int brake_pipe_fd, int log_fd, int hmi_pipe_fd) {
 	if(requested_speed > speed) {
 		send_command(throttle_pipe_fd, log_fd, hmi_pipe_fd, "INCREMENTO 5", sizeof("INCREMENTO 5"));
 		speed += 5;

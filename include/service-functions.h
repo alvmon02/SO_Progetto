@@ -12,7 +12,7 @@
 	#define SURR_CAM_LEN 8
 	#define PARK_TIME 30
 
-	short int initialize_socket(char * sock_pathname, int domain, int type, int queue_len);
+	// short int initialize_socket(char * sock_pathname, int domain, int type, int queue_len);
 
 	short int initialize_pipe(char * pipe_pathname, int flags, mode_t mode);
 
