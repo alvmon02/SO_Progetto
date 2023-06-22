@@ -61,7 +61,7 @@ throttle-control: $(EXECUTABLE)service-functions.o
 hmi: hmi-output hmi-input
 
 hmi-output: service-functions.o
-	cc -o $(EXECUTABLE)hmi-output.o \
+	cc -o $(EXECUTABLE)hmi-output \
 	$(EXECUTABLE)service-functions.o $(SRC_DIR)hmi-output.c
 
 hmi-input: service-functions.o
@@ -78,7 +78,7 @@ service-functions.o: $(HEADERS)service-functions.h $(SRC_DIR)service-functions.c
 install:
 	mkdir -p tmp
 	mkdir -p log
-	ln -s
+	ln -s $(EXECUTABLE)ADAS-simulator .
 
 clean:
 	rm -rf bin/*
