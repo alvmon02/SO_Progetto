@@ -30,11 +30,16 @@ int main() {
    * venga aperto in sola lettura dal processo throttle-control il quale vi
    * legga al bisogno. */
   int pipe_fd;
-  if((pipe_fd = ("../../tmp/throttle.pipe", O_RDONLY))){
+  if((pipe_fd = open("../../tmp/throttle.pipe", O_RDONLY)) < 0){
     perror("open pipe");
     exit(EXIT_FAILURE);
   }
-  if((log_fd = open("../../log/throttle.log", O_WRONLY | O_APPEND | O_CREAT, 0644))){
+
+  if (unlink("../../log/throttle.log") < 0){
+    perror("unlink");
+    exit(EXIT_FAILURE);
+  }
+  if((log_fd = open("../../log/throttle.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
     perror("open log");
     exit(EXIT_FAILURE);
   }
@@ -53,10 +58,14 @@ int main() {
    * Quest'ultimo caso da' inizio alla procedura simulativa dell'incremento.
    * Il pipe e` bloccante quindi il processo attende un messaggio dalla
 central-ECU */
-  while (1) {
-    if ((nread = read(pipe_fd, &increment, INPUT_MAX_LEN)) > 0) {
+  while (true) {
+    nread = read(pipe_fd, &increment, INPUT_MAX_LEN);
+    if (nread > 0) {
       if(!throttle_failed())
         time_log_func(log_fd, LOG_PHRASE_LEN, THROTTLE);
+    } else {
+      perror("read");
+      exit(EXIT_FAILURE);
     }
   }
 }
@@ -80,7 +89,10 @@ central-ECU */
  * non ne` compromette il funzionamento */
 bool throttle_failed() {
   if ((rand() % 100000) == 0) {
-    kill(getppid(), SIGUSR1);
+    if(kill(getppid(), SIGUSR1)){
+      perror("kill");
+      exit(EXIT_FAILURE);
+    }
     return true;
   }
   return false;

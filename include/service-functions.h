@@ -9,6 +9,9 @@
 	#define RIGHT 1
 	#define THROTTLE 0
 	#define BRAKE 1
+	#define INIZIO 0
+	#define ARRESTO 1
+	#define PARCHEGGIO 2
 	#define NORMALE "NORMALE"
 	#define ARTIFICIALE "ARTIFICIALE"
 	#define RADAR "RADAR"

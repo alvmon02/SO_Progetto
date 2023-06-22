@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdbool.h>
 #include "../../include/service-functions.h"
 
 // MACROS
@@ -28,13 +29,13 @@ int main(){
 	 * Il protocollo impone che il pipe sia creato durante la fase di inizializzazione del processo central-ECU e che
 	 * venga aperto in sola lettura dal processo steer-by-wire il quale vi legga al bisogno. */
 	int pipe_fd;
-	if((pipe_fd = open ("../../tmp/steer.pipe", O_RDONLY | O_NONBLOCK))){
+	if((pipe_fd = open ("../../tmp/steer.pipe", O_RDONLY | O_NONBLOCK)) < 0){
 		perror("open pipe");
 		exit(EXIT_FAILURE);
 	}
 
 	// Creazione e apertura del log file e associazione del file descriptor
-	if((log_fd = open("../../log/steer.log", O_WRONLY | O_APPEND | O_CREAT, 0644))){
+	if((log_fd = open("../../log/steer.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
 		perror("open log");
 		exit(EXIT_FAILURE);
 	}
@@ -56,13 +57,17 @@ int main(){
 	 * mentre "SINISTRA\n" e "DESTRA\n" daranno l'avvio alla seguenza di svolta nella rispettiva direzione.
 	 * Il tempo trascorso tra una read e la successiva e` di un secondo nel caso di no_action e di 4 secondi nel caso di turn().
 	 * Gli input ricevuti nel mezzo di questi intervalli saranno ignorati. */
-	while(1){
+	while(true){
 		nread = read(pipe_fd, action, sizeof(action));
 		switch(nread){
-			case 8: turn(log_phrase, LEFT);
+			case 8:
+				turn(log_phrase, LEFT);
 				break;
-			case 7: turn(log_phrase, RIGHT);
+			case 7:
+				turn(log_phrase, RIGHT);
 				break;
+			case -1:
+				perror("read");
 			default: no_action();
 		}
 	}
@@ -78,7 +83,7 @@ void turn ( char * log_phrase, short int direction){
 
 	// Si esegue la scrittura della log_phrase in steer.log per 4 volte (una volta al secondo per 4 secondi)
 	for(int i = 0; i < TURN_SECONDS; i++){
-		if(write(log_fd, log_phrase, LOG_MAX_LEN)){
+		if(write(log_fd, log_phrase, LOG_MAX_LEN) < 0){
 			perror("write");
 			exit(EXIT_FAILURE);
 		}
@@ -88,7 +93,7 @@ void turn ( char * log_phrase, short int direction){
 
 // La funzione esegue la scrittura della frase "NO ACTION" in steer.log (fd = log_fd) per 1 volta e attende un secondo
 void no_action( ){
-	if(write (log_fd, "NO ACTION\n", 10)){
+	if(write (log_fd, "NO ACTION\n", 10) < 0){
 		perror("write");
 		exit(EXIT_FAILURE);
 	}

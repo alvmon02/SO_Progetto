@@ -106,7 +106,7 @@
 			\item \textbf{Manjaro 23.0.0}, architettura x86\_64, kernel Linux 5.15.114-2-MANJARO
 			\item \textbf{Ubuntu 20.04}, architettura x86\_64, kernel Linux 5.15.0-75-generic
 		\end{itemize}
-		Il progetto è stato ideato avendo come obbiettivo un programma portatile che fosse preimpostato per eseguire su di un sistema \textbf{\underline{Ubuntu Linux 22.04}}.
+		Il progetto è stato ideato avendo come obbiettivo un programma portatile che fosse preimpostato per eseguire su di un sistema \textbf{\underline{Ubuntu Linux 22.04}}\footnote{NOTA SULLA PORTABILITÀ: nel programma è stata utilizzata di frequente la funzione \texttt{signal(2)}, il cui utilizzo è sconsigliato per motivi di portabilità dal manuale a favore della funzione \texttt{sigaction(2)}. Dato che il progetto è sviluppato per fini strettamente accademici, come autori abbiamo preferito non distaccarsi dalle nozioni presentate durante le lezioni sottolineando però che per una maggiore portabilità del sistema sarebbe richiesta una variazione nel suddetto contesto.}.
 		\paragraph{Istruzioni compilazione ed esecuzione}
 			Nel presente paragrafo si mostrano i passaggi necessari affinche si possa eseguire il programma sul proprio dispositivo:
 			\subparagraph{Estrazione e compilazione}
@@ -167,8 +167,6 @@
 					park assist					&	park-assist.c		\\\midrule
 					surround view cameras		&	bytes.sensors.c		\\\midrule
 					central ECU					&	central-ECU.c
-
-
 				\end{tabularx}
 			\end{tcolorbox}
 

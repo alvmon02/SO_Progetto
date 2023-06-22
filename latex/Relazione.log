@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Arch Linux) (preloaded format=pdflatex 2023.4.11)  21 JUN 2023 18:48
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Arch Linux) (preloaded format=pdflatex 2023.4.11)  22 JUN 2023 17:15
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -988,15 +988,17 @@ LaTeX Font Info:    Trying to load font information for TS1+phv on input line 1
 (/usr/share/texmf-dist/tex/latex/psnfss/ts1phv.fd
 File: ts1phv.fd 2020/03/25 scalable font definitions for TS1/phv.
 )
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 1
+09.
+
+(/usr/share/texmf-dist/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
+)
 
 Package hyperref Warning: Difference (3) between bookmark levels is greater 
 (hyperref)                than one, level fixed on input line 111.
 
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 1
-14.
-(/usr/share/texmf-dist/tex/latex/base/t1cmtt.fd
-File: t1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
-)
+
 Overfull \hbox (17.06631pt too wide) in paragraph at lines 115--116
 []\T1/phv/m/n/10.95 Spostarsi nel-la car-tel-la crea-ta-si con l'e-stra-zio-ne.
  (Esem-pio co-man-do: \T1/cmtt/m/n/10.95 cd ./$PROJECT_NAME_FOLDER$\T1/phv/m/n/
@@ -1010,8 +1012,8 @@ LaTeX Font Info:    Font shape `T1/phv/m/it' in size <9> not available
 pdfTeX warning: /usr/bin/pdflatex (file ./include/SO_Progetto_Diagrammi-Gerarch
 ia.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
 wed
-<./include/SO_Progetto_Diagrammi-Gerarchia.pdf, id=99, 572.1375pt x 394.3533pt>
-
+<./include/SO_Progetto_Diagrammi-Gerarchia.pdf, id=100, 572.1375pt x 394.3533pt
+>
 File: ./include/SO_Progetto_Diagrammi-Gerarchia.pdf Graphic file (type pdf)
 <use ./include/SO_Progetto_Diagrammi-Gerarchia.pdf>
 Package pdftex.def Info: ./include/SO_Progetto_Diagrammi-Gerarchia.pdf  used on
@@ -1041,31 +1043,31 @@ Package hyperref Warning: Difference (4) between bookmark levels is greater
 (hyperref)                than one, level fixed on input line 154.
 
 
-Underfull \hbox (badness 10000) in alignment at lines 172--172
+Underfull \hbox (badness 10000) in alignment at lines 170--170
 [][] 
  []
 
 
 Package hyperref Warning: Difference (3) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 176.
+(hyperref)                than one, level fixed on input line 174.
 
 [5]
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 184.
+(hyperref)                than one, level fixed on input line 182.
 
 
 
 pdfTeX warning: /usr/bin/pdflatex (file ./include/SO_Progetto_Diagrammi-Comunic
 azione.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> 
 allowed
-<./include/SO_Progetto_Diagrammi-Comunicazione.pdf, id=151, 577.19638pt x 202.8
+<./include/SO_Progetto_Diagrammi-Comunicazione.pdf, id=153, 577.19638pt x 202.8
 378pt>
 File: ./include/SO_Progetto_Diagrammi-Comunicazione.pdf Graphic file (type pdf)
 
 <use ./include/SO_Progetto_Diagrammi-Comunicazione.pdf>
 Package pdftex.def Info: ./include/SO_Progetto_Diagrammi-Comunicazione.pdf  use
-d on input line 189.
+d on input line 187.
 (pdftex.def)             Requested size: 519.47194pt x 182.55232pt.
 [6] [7 <./include/SO_Progetto_Diagrammi-Comunicazione.pdf>] (./Relazione.toc)
 \tf@toc=\write5
@@ -1077,15 +1079,15 @@ Package rerunfilecheck Info: File `Relazione.out' has not changed.
 (rerunfilecheck)             Checksum: BB221C798692F830A7424A7F1E56B930;2383.
  ) 
 Here is how much of TeX's memory you used:
- 28337 strings out of 476025
- 529828 string characters out of 5796532
+ 28338 strings out of 476025
+ 529839 string characters out of 5796532
  1869388 words of memory out of 5000000
  48234 multiletter control sequences out of 15000+600000
  579621 words of font info for 115 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  101i,16n,104p,1338b,606s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-pdfTeX warning (dest): name{Hfootnote.5} has been referenced but does not exist
+pdfTeX warning (dest): name{Hfootnote.6} has been referenced but does not exist
 , replaced by a fixed one
 
 </usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/tex
@@ -1098,10 +1100,10 @@ s/type1/public/cm-super/sftt1095.pfb></usr/share/texmf-dist/fonts/type1/urw/hel
 vetic/uhvb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvbo8a.pfb></
 usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texmf-dist
 /fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on Relazione.pdf (8 pages, 244657 bytes).
+Output written on Relazione.pdf (8 pages, 247653 bytes).
 PDF statistics:
- 267 PDF objects out of 1000 (max. 8388607)
- 218 compressed objects within 3 object streams
- 45 named destinations out of 1000 (max. 500000)
+ 269 PDF objects out of 1000 (max. 8388607)
+ 220 compressed objects within 3 object streams
+ 46 named destinations out of 1000 (max. 500000)
  151 words of extra memory for PDF output out of 10000 (max. 10000000)
 

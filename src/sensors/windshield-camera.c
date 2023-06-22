@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include "../../include/service-functions.h"
 
 // MACROS
@@ -31,14 +32,18 @@ int main ( ) {
   // si mantengono le precedenti scritture. Data l'esecuzione dell'unlink
   // da parte della central-ECU, non vi saranno scritture pendenti da
   // precedenti esecuzioni.
-  if((log_fd = open("../log/camera.log", O_WRONLY | O_APPEND | O_CREAT, 0644))){
+  if(unlink("../../log/camera.log") < 0){
+    perror("unlink log");
+    exit(EXIT_FAILURE);
+  }
+  if((log_fd = open("../../log/camera.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
     perror("open log");
     exit(EXIT_FAILURE);
   }
   // Inizializzazione e connessione del file descriptor al file da cui
   // ottenere i dati di input. Apertura in sola lettura all'inizio del file.
   int input_fd;
-  if((input_fd = open("../include/frontCamera.data", O_RDONLY))){
+  if((input_fd = open("../include/frontCamera.data", O_RDONLY)) < 0){
     perror("open input");
     exit(EXIT_FAILURE);
   }
@@ -59,7 +64,7 @@ int main ( ) {
   // Fintantoché il file non termina i dati vengono trasmessi alla
   // central-ECU, una volta terminato il processo termina con codice
   // EOF (=0).
-  while (1) {
+  while (true) {
     if((nread = read(input_fd, camera_input, INPUT_MAX_LEN)) < 0){
       perror("read");
       exit(EXIT_FAILURE);

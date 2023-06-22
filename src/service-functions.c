@@ -11,36 +11,6 @@
 #include <time.h>
 #include "../include/service-functions.h"
 
-// Funzione per l'inizializzazione delle socket.
-// La presente funzione esegue il processo di inizializzazione della socket dalla parte del
-// server eseguendo le operazioni di unlink, socket, bind e listen.
-// In caso avvenga un errore in una delle suddette funzioni viene scritto lo stato
-// dell'errore nel errno e stampato sullo stderr il nome della funzione tramite perror
-int initialize_socket(char * sock_pathname, int domain, int type, int queue_len){
-	int fd;
-	if(unlink(sock_pathname)){
-		perror("unlink");
-		exit(EXIT_FAILURE);
-	}
-	if((fd = socket(domain, type, 0))){
-		perror("unlink");
-		exit(EXIT_FAILURE);
-	}
-	struct sockaddr_un addr;
-	addr.sun_family = domain;
-	strcpy(addr.sun_path, sock_pathname);
-	if (!bind(fd, (struct sockaddr *) &addr, sizeof(addr))) {
-		perror("bind");
-		exit(EXIT_FAILURE);
-	}
-
-	if (!listen (fd, queue_len)){
-		perror("listen");
-		exit(EXIT_FAILURE);
-	}
-	return fd;
-}
-
 // Funzione per l'inizializzazione delle pipe.
 // La presente funzione esegue la parte di inizializzazione delle pipe.
 // Questa viene eseguita da uno solo dei processi che si connettono alla pipe,
@@ -64,7 +34,10 @@ int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 
 // Funzione per la lettura di messaggi tramite pipe
 void read_output (int fd, char * message_out, size_t size){
-	read (fd, message_out, size);
+	if(read (fd, message_out, size)){
+		perror("read");
+		exit(EXIT_FAILURE);
+	}
 }
 
 // Funzione che converte una stringa binaria di bytes (unsigned char *)
@@ -95,11 +68,15 @@ void broad_log (int pipe_fd, int log_fd, char * message, size_t size){
 // dal file descriptor log_fd. Sfrutta le funzioni hex(unsigned char *, size_t, char *) e la funzione
 // broad_log(int, int, char *, size_t)
 void read_conv_broad(int input_fd, unsigned char * input_str, char * input_hex, int comm_fd, int log_fd){
-	if( read(input_fd, input_str, BYTES_LEN) == BYTES_LEN ){
+	int nread;
+	if((nread = read(input_fd, input_str, BYTES_LEN)) < 0){
+		perror("read");
+		exit(EXIT_FAILURE);
+	} else if( nread == BYTES_LEN ){
 			hex(input_str, BYTES_LEN, input_hex);
 			broad_log(comm_fd, log_fd, input_hex, (BYTES_LEN *2) + 1);
-		}
-		sleep(1);
+	}
+	sleep(1);
 }
 
 // str_toupper restituisce una stringa equivalente alla stringa str
@@ -168,12 +145,18 @@ void time_log_func (int log_fd, size_t size, short int proc ){
 pid_t make_process(char *program_name, int name_length) {
 	pid_t pid;
 	char *program_path = malloc(name_length + 7);
+	if(program_path == NULL){
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
 	strcpy(program_path,"../bin/");
 	program_path = strcat(program_path, program_name);
-	if(!(pid = fork()))
+	pid = fork();
+	if(pid < 0){
+		perror("fork");
+		exit(EXIT_FAILURE);
+	} else if(pid == 0)
 		execl(program_path,program_name, NULL);
-	else {
-		free(program_path);
-		return pid;
-	}
+	free(program_path);
+	return pid;
 }
