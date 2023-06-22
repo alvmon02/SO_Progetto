@@ -1,4 +1,6 @@
-all: exec
+all: bin_mkdir exec
+
+#Need to have an executable for each sensor, and one executable for each actuator
 
 CFLAGS = -Wall
 HEADERS = ./include/
@@ -9,86 +11,74 @@ SRC_DIR = ./src/
 SRC_SEN_DIR = ./src/sensors/
 SRC_ACT_DIR = ./src/actuators/
 
+#Creazione della cartella di bin
+bin_mkdir:
+	mkdir -p $(EXECUTABLE)
+
+
 #Compilazione del file eseguibile, unione dei file precompilati
-exec: sensors actuators central-ECU.o hmi service-functions.o
-	cc -o $(EXECUTABLE)exec $(EXECUTABLE)central-ECU.o \
-	$(EXECUTABLE)sensors $(EXECUTABLE)actuators \
-	$(EXECUTABLE)hmi $(EXECUTABLE)service-functions.o
+exec: sensors actuators hmi ADAS-simulator
 
+#Compilazione del file con il Main principale
+ADAS-simulator: service-functions.o
+	cc -o $(EXECUTABLE)ADAS-simulator \
+	$(EXECUTABLE)service-functions.o $(SRC_DIR)central-ECU.c
 
-#Pre-Compilazione dei file relativi ai sensori
+#Compilazione dei eseguibili relativi ai sensori
+sensors: park-assist windshield-camera bytes-sensors
 
-#	Creazione della libreria sensors per un uso successivo semplificato
-sensors:bytes-sensors.o park-assist.o \
-	windshield-camera.o surround-view-cameras.o \
-	service-functions.o
-	ar rs $(EXECUTABLE)sensors $(EXECUTABLE)bytes-sensors.o \
-	$(EXECUTABLE)park-assist.o \
-	$(EXECUTABLE)surround-view-cameras.o $(EXECUTABLE)windshield-camera.o
+park-assist:service-functions.o
+	cc -o $(EXECUTABLE)park-assist \
+	$(EXECUTABLE)service-functions.o $(SRC_SEN_DIR)park-assist.c
 
-bytes-sensors.o: service-functions.o
-	cc -c -o$(EXECUTABLE)bytes-sensors.o $(SRC_SEN_DIR)bytes-sensors.c
+windshield-camera: service-functions.o
+	cc -o $(EXECUTABLE)windshield-camera \
+	$(EXECUTABLE)service-functions.o $(SRC_SEN_DIR)windshield-camera.c
 
-# forward-facing-radar.o: service-functions.o
-# 	cc -c -o$(EXECUTABLE)forward-facing-radar.o $(SRC_SEN_DIR)forward-facing-radar.c
+bytes-sensors: service-functions.o
+	cc -o $(EXECUTABLE)bytes-sensors \
+	$(EXECUTABLE)service-functions.o $(SRC_SEN_DIR)bytes-sensors.c
 
-park-assist.o:service-functions.o
-	cc -c -o$(EXECUTABLE)park-assist.o $(SRC_SEN_DIR)park-assist.c
+#Compilazione dei eseguibili relativi agli attuatori
+actuators: brake-by-wire steer-by-wire throttle-control
 
-surround-view-cameras.o:service-functions.o
-	cc -c -o$(EXECUTABLE)surround-view-cameras.o \
-	$(SRC_SEN_DIR)bytes-sensors.c
+brake-by-wire: service-functions.o
+	cc -o $(EXECUTABLE)brake-by-wire \
+	$(EXECUTABLE)service-functions.o $(SRC_ACT_DIR)brake-by-wire.c
 
-windshield-camera.o: service-functions.o
-	cc -c -o$(EXECUTABLE)windshield-camera.o $(SRC_SEN_DIR)windshield-camera.c
+steer-by-wire: $(EXECUTABLE)service-functions.o
+	cc -o $(EXECUTABLE)steer-by-wire \
+	$(EXECUTABLE)service-functions.o $(SRC_ACT_DIR)steer-by-wire.c
 
-
-#Pre-Compilazione dei file relativi agli attuatori
-
-#	Creazione della libreria actuators per un uso successivo semplificato
-actuators: brake-by-wire.o steer-by-wire.o throttle-control.o
-	ar rs $(EXECUTABLE)actuators $(EXECUTABLE)brake-by-wire.o \
-	$(EXECUTABLE)steer-by-wire.o $(EXECUTABLE)throttle-control.o
-
-
-brake-by-wire.o: $(SRC_ACT_DIR)brake-by-wire.c $(HEADERS)service-functions.h
-	cc -c -o$(EXECUTABLE)brake-by-wire.o $(SRC_ACT_DIR)brake-by-wire.c
-
-steer-by-wire.o: $(SRC_ACT_DIR)steer-by-wire.c $(HEADERS)service-functions.h
-	cc -c -o$(EXECUTABLE)steer-by-wire.o $(SRC_ACT_DIR)steer-by-wire.c
-
-throttle-control.o: $(SRC_ACT_DIR)throttle-control.c $(HEADERS)service-functions.h
-	cc -c -o$(EXECUTABLE)throttle-control.o $(SRC_ACT_DIR)throttle-control.c
+throttle-control: $(EXECUTABLE)service-functions.o
+	cc -o $(EXECUTABLE)throttle-control \
+	$(EXECUTABLE)service-functions.o $(SRC_ACT_DIR)throttle-control.c
 
 
 
 
-#Pre-Compilazione dell'hmi
+#Compilazione della HMI, due eseguibili
+hmi: hmi-output hmi-input
 
-#	Creazione della libreria hmi per un uso successivo semplificato
-hmi: hmi-output.o hmi-input.o
-	ar rs $(EXECUTABLE)hmi $(EXECUTABLE)hmi-output.o \
-	$(EXECUTABLE)hmi-input.o
+hmi-output: service-functions.o
+	cc -o $(EXECUTABLE)hmi-output \
+	$(EXECUTABLE)service-functions.o $(SRC_DIR)hmi-output.c
 
-hmi-output.o: $(SRC_DIR)hmi-output.c $(HEADERS)service-functions.h
-	cc -c -o$(EXECUTABLE)hmi-output.o $(SRC_DIR)hmi-output.c
+hmi-input: service-functions.o
+	cc -o $(EXECUTABLE)hmi-input \
+	$(EXECUTABLE)service-functions.o $(SRC_DIR)hmi-input.c
 
-hmi-input.o: $(SRC_DIR)hmi-input.c $(HEADERS)service-functions.h
-	cc -c -o$(EXECUTABLE)hmi-input.o  $(SRC_DIR)hmi-input.c
 
-service-functions.o: $(SRC_DIR)service-functions.c $(HEADERS)service-functions.h
+#	Pre-Compilazione delle funzioni di servizio
+service-functions.o: $(HEADERS)service-functions.h $(SRC_DIR)service-functions.c
 	cc -c -o$(EXECUTABLE)service-functions.o $(SRC_DIR)service-functions.c
 
-#Pre-Compilazione della central-ECU
-central-ECU.o: $(SRC_DIR)central-ECU.c $(HEADERS)service-functions.h
-	cc -c -o$(EXECUTABLE)central-ECU.o $(SRC_DIR)central-ECU.c
 
 
 install:
-	mkdir -p bin
 	mkdir -p tmp
 	mkdir -p log
-	all
+	ln -s $(EXECUTABLE)ADAS-simulator .
 
 clean:
 	rm -rf bin/*
@@ -99,3 +89,4 @@ uninstall:
 	rm -rf bin
 	rm -rf tmp
 	rm -rf log
+	rm ADAS-simulator
