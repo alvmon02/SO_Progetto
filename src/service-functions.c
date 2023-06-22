@@ -11,25 +11,6 @@
 #include <sys/un.h> /*per la conessione UNIX_SOCKET*/
 #include "../include/service-functions.h"
 
-short int initialize_socket(char * sock_pathname, int domain, int type, int queue_len){
-	short int fd;
-	unlink(sock_pathname);
-	fd = socket(domain, type, 0);
-	struct sockaddr_un addr;
-	addr.sun_family = domain;
-	strcpy(addr.sun_path, sock_pathname);
-	if (!bind(fd, (struct sockaddr *) &addr, sizeof(addr))) {
-		perror("bind");
-		exit(EXIT_FAILURE);
-	}
-
-	if (!listen (fd, queue_len)){
-		perror("listen");
-		exit(EXIT_FAILURE);
-	}
-	return fd;
-}
-
 short int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 	short int fd;
 	unlink (pipe_pathname);
@@ -68,16 +49,25 @@ char * str_toupper(char * str) {
 	return str;
 }
 
-// DA FARE MAKE_PROCESS CHE POI E' DA SOSTITUIRE IN TUTTE LE INIT DEI VARI COMPONENTI
-pid_t make_process(char *program_name, int name_length) {
+pid_t make_process(char *program_name, int name_length, char *args) {
 	pid_t pid;
 	char *program_path = malloc(name_length + 7);
 	strcpy(program_path,"../bin/");
 	program_path = strcat(program_path, program_name);
-	if(!(pid = fork()))
-		execl(program_path,program_name, NULL);
-	else {
-		free(program_path);
-		return pid;
+	if(!(pid = fork())) {
+		if(args != NULL)
+			execl(program_path,program_name, args, NULL);
+		else
+			execl(program_path,program_name, NULL);
 	}
+	free(program_path);
+	return pid;
+}
+
+pid_t make_sensor(char *program_name, char *mode) {
+	pid_t pid;
+	if(!(pid = fork()))
+		execl("../bin/bytes_sensors","bytes_sensors", mode, program_name, NULL);
+	else
+		return pid;
 }
