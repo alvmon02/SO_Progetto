@@ -18,6 +18,13 @@ int read_from_ECU(int client_fd);
 
 int main(int argc, char const *argv[])
 {
+	/* code */
+	return 0;
+}
+
+/*
+int main(int argc, char const *argv[])
+{
 	int client_fd, pid,
 		park_assist_pipe_fd,
 		counter = 0,
@@ -114,3 +121,4 @@ int read_from_ECU(int client_fd)
 
 	return start_signal;
 }
+*/
