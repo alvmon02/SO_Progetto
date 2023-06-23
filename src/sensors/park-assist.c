@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 /*Inclusione delle librerie necessarie*/
 #include <stdio.h>  /*per sprintf, getline */
 #include <stdlib.h> /*per funzione exit*/
@@ -7,15 +8,23 @@
 #include <string.h> /*per funzione strlen*/
 #include <ctype.h> /*per la funzione toupper*/
 #include <sys/stat.h>  /*per mknod (sys call per mkfifo)*/
-#include <sys/socket.h> /*per socket tipi*/
-#include <sys/un.h> /*per la conessione UNIX_SOCKET*/
+#include <signal.h>  /*per il uso di segnali*/
 #include "../../include/service-functions.h"
 
 #define PARK_TIME 30
 
+short int start;
+
+void signal_start_handler(int sig);
+void files_opening(int* log_assist_fd, int* bin_file_fd, char* bin_file_path);
+
 
 int main(int argc, char const *argv[])
 {
+	start = 0;
+	signal(SIGUSR2,signal_start_handler);
+	while(!start);
+	
 	int pid,
 		log_assist_fd, bin_file_fd,
 		park_assist_pipe_fd, ECU_pipe_fd,
@@ -65,12 +74,16 @@ int main(int argc, char const *argv[])
 				 * si invia la informazione alla ECU
 				 */
 			read_conv_broad(bin_file_fd,read_aux,aux_hex,ECU_pipe_fd,log_assist_fd);
-			wait(1);
+			sleep(1);
 			counter++;
 		}
-		
-	}
+		kill(pid,SIGTSTP);
+	
+		if(pid == 0 && counter == PARK_TIME)
+			kill(getppid(),SIGUSR2);
+	}	
 
+	
 	close(bin_file_fd);
 	close(log_assist_fd);
 	close(park_assist_pipe_fd);
@@ -93,4 +106,8 @@ void files_opening(int* log_assist_fd, int* bin_file_fd, char* bin_file_path)
 		perror("Errore nell'apertura del file binario");
 		exit(EXIT_FAILURE);
 	}
+}
+
+void signal_start_handler(int sig){
+	start = 1;
 }
