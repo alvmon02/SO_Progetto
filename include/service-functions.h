@@ -23,8 +23,6 @@
 
 	int initialize_pipe(char * pipe_pathname, int flags, mode_t mode);
 
-	void read_output (int pipe_fd, char * message_out, size_t size);
-
 	void hex(unsigned char* to_conv, size_t size,  char* converted);
 
 	void broad_log (int pipe_fd, int log_fd, char * message, size_t size);

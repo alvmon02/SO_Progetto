@@ -32,14 +32,6 @@ int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 	return fd;
 }
 
-// Funzione per la lettura di messaggi tramite pipe
-void read_output (int fd, char * message_out, size_t size){
-	if(read (fd, message_out, size)){
-		perror("read");
-		exit(EXIT_FAILURE);
-	}
-}
-
 // Funzione che converte una stringa binaria di bytes (unsigned char *)
 // in codifica esadecimale.
 void hex ( unsigned char* to_conv, size_t size, char* converted){
