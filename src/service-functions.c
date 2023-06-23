@@ -16,20 +16,16 @@
 // Questa viene eseguita da uno solo dei processi che si connettono alla pipe,
 // infatti esegue la funzione unlink, la funzione mkfifo e la open con flags specificati come parametro.
 int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
-	if(unlink (pipe_pathname)){
-		perror("unlink");
-		exit(EXIT_FAILURE);
-	}
-	if(mkfifo(pipe_pathname, mode)){
-		perror("mkfifo");
-		exit(EXIT_FAILURE);
-	}
-	int fd;
-	if((fd = open(pipe_pathname, flags))){
-		perror("open");
-		exit(EXIT_FAILURE);
-	}
-	return fd;
+	unlink (pipe_pathname);
+	mkfifo(pipe_pathname, mode);
+	// if(unlink (pipe_pathname))
+	// 	perror("unlink");
+	// if(mkfifo(pipe_pathname, mode))
+	// 	perror("mkfifo");
+	// int fd;
+	// if((fd = open(pipe_pathname, flags)))
+	// 	perror("open");
+	return openat(AT_FDCWD, pipe_pathname, flags, mode);
 }
 
 // Funzione che converte una stringa binaria di bytes (unsigned char *)
@@ -141,7 +137,7 @@ pid_t make_process(char *program_name, int name_length, char *args) {
 		perror("malloc");
 		exit(EXIT_FAILURE);
 	}
-	strcpy(program_path,"../bin/");
+	strcpy(program_path,"./bin/");
 	program_path = strcat(program_path, program_name);
 	pid = fork();
 	if(pid < 0){
@@ -160,6 +156,6 @@ pid_t make_process(char *program_name, int name_length, char *args) {
 pid_t make_sensor(char *program_name, char *mode) {
 	pid_t pid;
 	if(!(pid = fork()))
-		execl("../bin/bytes_sensors","bytes_sensors", mode, program_name, NULL);
+		execl("./bin/bytes_sensors","bytes_sensors", mode, program_name, NULL);
 	return pid;
 }

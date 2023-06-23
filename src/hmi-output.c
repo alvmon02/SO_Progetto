@@ -22,9 +22,9 @@ int main() {
   // aperto in sola lettura dal processo hmi-output il quale vi
   // legga non appena riceva un messaggio.
 	int pipe_fd;
-	if((pipe_fd = open("../tmp/hmi-out.pipe", O_RDONLY)) < 0){
+	if((pipe_fd = openat(AT_FDCWD,"../tmp/hmi-out.pipe", O_RDONLY)) < 0){
 		perror("open pipe");
-		exit(EXIT_FAILURE);
+		// exit(EXIT_FAILURE);
 	}
 
 	// Inizializzazione della stringa di input che rappresenta
@@ -33,7 +33,7 @@ int main() {
 	char * ECU_input = malloc(INPUT_MAX_LEN);
 	if(ECU_input == NULL){
 		perror("malloc");
-		exit(EXIT_FAILURE);
+		// exit(EXIT_FAILURE);
 	}
 	int nread;
 	printf("TERMINALE DI OUTPUT\n\n");
@@ -50,6 +50,6 @@ int main() {
 // Funzione per la gestione del segnale di errore
 // Esegue la scrittura sul terminale tramite una write (vedi manuale signal-safety(7)) per mostrare l'interruzione del programma e la terminazione dell'intero programma.
 void throttle_failed_handler ( int sig ){
-	write(STDOUT_FILENO, "\nVEICOLO ARRESTATO.\nFallimento accelerazione.\nTerminazione totale esecuzione programma.\n", 88);
+	write(STDOUT_FILENO, "\nVEICOLO ARRESTATO.\nFallimento accelerazione.\nTerminazione totale esecuzione programma.\n", 89);
 	exit(EXIT_SUCCESS);
 }
