@@ -49,7 +49,7 @@ int main() {
 
 // Funzione per la gestione del segnale di errore
 // Esegue la scrittura sul terminale tramite una write (vedi manuale signal-safety(7)) per mostrare l'interruzione del programma e la terminazione dell'intero programma.
-void interrupt_handler ( int sig ){
-	write(STDOUT_FILENO, "\nVEICOLO ARRESTATO.\nFallimento accelerazione.\nTerminazione totale esecuzione programma.\0", 90);
+void throttle_failed_handler ( int sig ){
+	write(STDOUT_FILENO, "\nVEICOLO ARRESTATO.\nFallimento accelerazione.\nTerminazione totale esecuzione programma.\n", 89);
 	exit(EXIT_SUCCESS);
 }
