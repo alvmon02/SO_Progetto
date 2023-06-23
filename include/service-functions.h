@@ -20,6 +20,8 @@
 	#define BYTES_LEN 8
 	#define SURR_CAM_LEN 8
 	#define PARK_TIME 30
+	#define CONTINUE 0
+	#define RELOAD 1
 
 	int initialize_pipe(char * pipe_pathname, int flags, mode_t mode);
 
@@ -34,5 +36,7 @@
 	void time_log_func ( int log_fd, size_t size, short int proc);
 
 	pid_t make_process(char *program_name, int name_length, char *args);
+
+	pid_t make_sensor(char *, char *);
 
 #endif // SERVICE_FUNCTIONS_H_DEFINED
