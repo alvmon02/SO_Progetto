@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/stat.h>
 #include "../include/service-functions.h"
 
 #define HMI_COMMAND_LENGTH 11 
@@ -16,6 +16,7 @@
 #define PARK_BYTES_NUMBER 8
 #define TERMINAL_NAME_MAX_LENGTH 50
 #define MOD_LENGTH 12
+#define STDERR 2
 
 // struttura per salvare i processi con i loro pid, il gruppo a cui appartengono e la
 // pipe con cui comunicare col processo.
@@ -39,13 +40,14 @@ struct pipe_process brake_init();
 int steer_init(pid_t);
 int throttle_init(pid_t);
 struct pipe_process camera_init();
-int radar_init(pid_t);
+int radar_init(pid_t, char*);
 struct pipe_process park_assist_init();
 void hmi_init(struct pipe_process *,int);
 void arrest(pid_t);
 void ECU_signal_handler(int);
 void send_command(int, int, int, char *, size_t);
 void change_speed(int, int, int, int, int);
+bool accettable_string(char *, int);
 
 int speed = 0;
 
@@ -59,11 +61,12 @@ int main(int argc, char **argv){
 	}
 
 	// controlla che il secondo argomento sia la modalita' d'esecuzione
+	char *modalita = malloc(MOD_LENGTH);
 	if(strcmp(argv[1],ARTIFICIALE) && (strcmp(argv[1],NORMALE))) {
 		perror(" invalid input modality");
 		exit(EXIT_FAILURE);
 	} else
-		char modalita[MOD_LENGTH] = argv[1];
+		modalita = argv[1];
 
 	// se c'e' imposta il terminale scelto dall'utente
 	if(argc == 4 && !(strcmp(argv[2], "--term"))) {
@@ -78,7 +81,7 @@ int main(int argc, char **argv){
 	umask(000);
 	unlink("../log/errors.log");
 	int error_log_fd = open("../log/errors.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
-	dup2(stderr, error_log_fd);
+	dup2(STDERR, error_log_fd);
 
 	// inizializza tutti i processi figli salvando dove necessario l'intero processo
 	// in una struct pipe_process (nel caso di brake-by-wire, windshield-camera e park-assist)
@@ -106,7 +109,7 @@ int main(int argc, char **argv){
 	// ciclo d'attesa prima dell'inizio del viaggio
 	int hmi_command;
 	do {
-		read(hmi_process[READ].pipe_fd, hmi_command, sizeof(int));
+		read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(int));
 		if(hmi_command == PARCHEGGIO)
 			travel_flag = false;
 		sleep(1);
@@ -130,7 +133,7 @@ int main(int argc, char **argv){
 		read(radar_pipe_fd, radar_buf, RADAR_BYTES_NUMBER);
 		// legge dalla hmi esce arresta la macchina o esce dal ciclo del viaggio
 		// per frenare e poi eseguire la procedura di parcheggio
-		read(hmi_process[READ].pipe_fd, hmi_command, sizeof(int));
+		read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(int));
 		if(hmi_command == PARCHEGGIO)
 			break;
 		else if(hmi_command == ARRESTO)
@@ -168,8 +171,9 @@ int main(int argc, char **argv){
 	// avvia la procedura di parcheggio
 	kill(parking_signal, SIGINT);
 	char park_data[PARK_BYTES_NUMBER];
+	unsigned char park_command[] = {CONTINUE, RELOAD};
 	bool parking_completed = false;
-	struct socket_process park_process;
+	struct pipe_process park_process;
 	park_process = park_assist_init(modalita);
 	processes_groups.park_assist_group = park_process.pgid;
 	while (!parking_completed) {
@@ -178,13 +182,13 @@ int main(int argc, char **argv){
 			read(park_process.pipe_fd, park_data, PARK_BYTES_NUMBER);
 			if(accettable_string(park_data, PARK_BYTES_NUMBER))
 				break;
-			write(park_process.pipe_fd, CONTINUE, 1);
+			write(park_process.pipe_fd, &park_command[0], 1);
 			if(++time == PARK_TIME)
 				parking_completed = true;
 			sleep(1);
 		}
 		if(!parking_completed)
-			write(park_process.pipe_fd, RELOAD, 1);
+			write(park_process.pipe_fd, &park_command[1], 1);
 	}
 
 	// termino i processi dei sensori, degli attuatori e di park-assist
@@ -262,7 +266,7 @@ void ECU_signal_handler (int sig){
 	} else if(sig == SIGUSR2) {
 		// significa che park_assist ha concluso la procedura di parcheggio
 		kill(processes_groups.park_assist_group, SIGKILL);
-		kill(sensor_signal, SIGKILL);
+		kill(processes_groups.sensors_group, SIGKILL);
 		// QUI ORA UCCIDO LA HMI MA PRIMA VOGLIO MANDARE UN SEGNALE DIFFERENTE
 		kill(-(processes_groups.hmi_group), SIGUSR1);
 		umask(022);
