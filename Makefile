@@ -77,7 +77,7 @@ service-functions.o: $(HEADERS)service-functions.h $(SRC_DIR)service-functions.c
 install:
 	mkdir -p tmp
 	mkdir -p log
-	ln -s $(EXECUTABLE)ADAS-simulator .
+	ln -sf $(EXECUTABLE)ADAS-simulator .
 
 clean:
 	rm -rf bin/*

@@ -17,8 +17,7 @@
 // INPUT_LEN: numero fisso di byte da leggere dall'input
 #define INPUT_LEN 8
 
-void signal_stop_handler( int );
-void signal_continue_handler( int );
+void signal_stp_handler( int );
 
 	int log_fd;
 	int comm_fd;
@@ -37,7 +36,7 @@ int main(int argc, char * argv[]){
 		exit(EXIT_FAILURE);
 	}
 
-	signal(SIGSTOP, signal_stop_handler);
+	signal(SIGTSTP, signal_stp_handler);
 
 	// Inizializzazione del file descriptor tramite apertura del file
 	// da cui ottenere i bytes di input.
@@ -113,8 +112,6 @@ int main(int argc, char * argv[]){
   }
 }
 
-void signal_stop_handler(int sig) {
+void signal_stp_handler(int sig) {
 	fflush(fdopen(comm_fd, "w"));
 }
-
-

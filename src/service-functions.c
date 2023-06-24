@@ -1,4 +1,5 @@
 /*Inclusione delle librerie necessarie*/
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -9,6 +10,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <time.h>
+#include <errno.h>
 #include "../include/service-functions.h"
 
 // Funzione per l'inizializzazione delle pipe.
@@ -16,16 +18,14 @@
 // Questa viene eseguita da uno solo dei processi che si connettono alla pipe,
 // infatti esegue la funzione unlink, la funzione mkfifo e la open con flags specificati come parametro.
 int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
-	unlink (pipe_pathname);
-	mkfifo(pipe_pathname, mode);
-	// if(unlink (pipe_pathname))
-	// 	perror("unlink");
-	// if(mkfifo(pipe_pathname, mode))
-	// 	perror("mkfifo");
-	// int fd;
-	// if((fd = open(pipe_pathname, flags)))
-	// 	perror("open");
-	return openat(AT_FDCWD, pipe_pathname, flags, mode);
+	if(unlinkat(AT_FDCWD, pipe_pathname, 0) < 0)
+		perror("unlinkat pipe");
+	if(mkfifoat(AT_FDCWD, pipe_pathname, mode) < 0)
+		perror("mkfifoat pipe");
+	int pipe_fd;
+	if((pipe_fd = openat(AT_FDCWD, pipe_pathname, flags)) <0)
+		perror("openat pipe");
+	return pipe_fd;
 }
 
 // Funzione che converte una stringa binaria di bytes (unsigned char *)
@@ -129,25 +129,21 @@ void time_log_func (int log_fd, size_t size, short int proc ){
 	}
   free(log_phrase);
 }
-
 pid_t make_process(char *program_name, int name_length, char *args) {
 	pid_t pid;
-	char *program_path = malloc(name_length + 7);
-	if(program_path == NULL){
+	char *program_path = malloc(name_length + 6);
+	if(program_path == NULL)
 		perror("malloc");
-		exit(EXIT_FAILURE);
-	}
 	strcpy(program_path,"./bin/");
 	program_path = strcat(program_path, program_name);
 	pid = fork();
-	if(pid < 0){
+	if(pid < 0)
 		perror("fork");
-		exit(EXIT_FAILURE);
-	} else if(pid == 0){
+	else if(pid == 0){
 		if(args != NULL)
-			execl(program_path,program_name, args, NULL);
+			execlp(program_path,program_name, args, NULL);
 		else
-			execl(program_path,program_name, NULL);
+			execlp(program_path,program_name, NULL);
 	}
 	free(program_path);
 	return pid;

@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -9,6 +10,7 @@
 #define INPUT_MAX_LEN 13
 
 void throttle_failed_handler ( int );
+void interrupt_handler (int );
 
 // La funzione main esegue le operazioni relative al componente
 // di output, noto come human-machine-interface_output, abbreviato hmi-output
@@ -22,10 +24,11 @@ int main() {
   // aperto in sola lettura dal processo hmi-output il quale vi
   // legga non appena riceva un messaggio.
 	int pipe_fd;
-	if((pipe_fd = openat(AT_FDCWD,"../tmp/hmi-out.pipe", O_RDONLY)) < 0){
+	while((pipe_fd = openat(AT_FDCWD,"tmp/hmi-out.pipe", O_RDONLY)) < 0){
 		perror("open pipe");
-		// exit(EXIT_FAILURE);
+		sleep(1);
 	}
+	printf("CONNECTED\n");
 
 	// Inizializzazione della stringa di input che rappresenta
 	// il messaggio da stampare a video sul terminale.
@@ -53,3 +56,8 @@ void throttle_failed_handler ( int sig ){
 	write(STDOUT_FILENO, "\nVEICOLO ARRESTATO.\nFallimento accelerazione.\nTerminazione totale esecuzione programma.\n", 89);
 	exit(EXIT_SUCCESS);
 }
+
+void interrupt_handler( int sig ) {
+	exit(EXIT_SUCCESS);
+}
+
