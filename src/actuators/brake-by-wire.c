@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -13,7 +14,7 @@
 #define LOG_PHRASE_LEN 30
 
 // File descriptor del log file
-	int log_fd;
+int log_fd;
 
 void emergency_arrest ( );
 
@@ -24,8 +25,8 @@ int main ( ) {
 	 * Il protocollo impone che il pipe sia creato durante la fase di inizializzazione del processo central-ECU e che
 	 * venga aperto in sola lettura dal processo brake-by-wire il quale vi legga al bisogno. */
 	int pipe_fd;
-	if((pipe_fd = open ("../../tmp/brake.pipe", O_RDONLY)) < 0){
-		perror("open pipe");
+	if((pipe_fd = openat(AT_FDCWD, "tmp/brake.pipe", O_RDONLY)) < 0){
+		perror("open brake pipe");
 		exit(EXIT_FAILURE);
 	}
 
@@ -34,8 +35,8 @@ int main ( ) {
 	 * si mantengono le precedenti scritture. Dato che viene eseguito l'unlink
 	 * da parte della central-ECU allora non vi saranno scritture pendenti da
 	 * precedenti esecuzioni. */
-	if((log_fd = open("../../log/brake.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
-		perror("open log");
+	if((log_fd = openat(AT_FDCWD, "log/brake.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
+		perror("open brake log");
 		exit(EXIT_FAILURE);
 	}
 
@@ -58,9 +59,9 @@ int main ( ) {
    * Quest'ultimo caso da' inizio alla procedura simulativa dell'freno.
    * Il pipe e` bloccante quindi il processo attende un messaggio dalla central-ECU */
 	while(true){
-		nread = read (pipe_fd, &increment, INPUT_MAX_LEN);
+		nread = read (pipe_fd, increment, INPUT_MAX_LEN);
 		if(nread < 0){
-			perror("read");
+			perror("brake: read");
 			exit(EXIT_FAILURE);
 		}
 		if(nread > 0){

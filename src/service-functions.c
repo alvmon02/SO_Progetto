@@ -1,5 +1,6 @@
 /*Inclusione delle librerie necessarie*/
 #define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -19,12 +20,14 @@
 // infatti esegue la funzione unlink, la funzione mkfifo e la open con flags specificati come parametro.
 int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 	if(unlinkat(AT_FDCWD, pipe_pathname, 0) < 0)
-		perror("unlinkat pipe");
+		// perror("service: unlinkat pipe");
 	if(mkfifoat(AT_FDCWD, pipe_pathname, mode) < 0)
-		perror("mkfifoat pipe");
+		perror("service: mkfifoat pipe");
 	int pipe_fd;
-	if((pipe_fd = openat(AT_FDCWD, pipe_pathname, flags)) <0)
-		perror("openat pipe");
+	while((pipe_fd = openat(AT_FDCWD, pipe_pathname, flags)) <0){
+		perror("service: openat pipe");
+		sleep(1);
+	}
 	return pipe_fd;
 }
 
@@ -44,9 +47,8 @@ void hex ( unsigned char* to_conv, size_t size, char* converted){
 // Funzione per l'esecuzione sequenziale di invio tramite pipe di un messaggio
 // e la scrittura dello stesso nel log file.
 void broad_log (int pipe_fd, int log_fd, char * message, size_t size){
-	if(write (pipe_fd, message, size) || write (log_fd,	message, size)){
-		perror("write");
-		exit(EXIT_FAILURE);
+	if(write (pipe_fd, message, size) < 0  || write (log_fd,	message, size) < 0 ){
+		perror("broad_log: write");
 	}
 }
 
@@ -58,7 +60,7 @@ void broad_log (int pipe_fd, int log_fd, char * message, size_t size){
 void read_conv_broad(int input_fd, unsigned char * input_str, char * input_hex, int comm_fd, int log_fd){
 	int nread;
 	if((nread = read(input_fd, input_str, BYTES_LEN)) < 0){
-		perror("read");
+		perror("read_conv_broad: read");
 		exit(EXIT_FAILURE);
 	} else if( nread == BYTES_LEN ){
 			hex(input_str, BYTES_LEN, input_hex);
@@ -152,6 +154,7 @@ pid_t make_process(char *program_name, int name_length, char *args) {
 pid_t make_sensor(char *program_name, char *mode) {
 	pid_t pid;
 	if(!(pid = fork()))
-		execl("./bin/bytes_sensors","bytes_sensors", mode, program_name, NULL);
+		if(execlp("./bin/bytes-sensors","bytes-sensors", mode, program_name, NULL) < 0)
+			perror("make_sensor: execlp");
 	return pid;
 }

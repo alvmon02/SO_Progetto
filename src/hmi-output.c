@@ -24,11 +24,8 @@ int main() {
   // aperto in sola lettura dal processo hmi-output il quale vi
   // legga non appena riceva un messaggio.
 	int pipe_fd;
-	while((pipe_fd = openat(AT_FDCWD,"tmp/hmi-out.pipe", O_RDONLY)) < 0){
-		perror("open pipe");
-		sleep(1);
-	}
-	printf("CONNECTED\n");
+	if((pipe_fd = openat(AT_FDCWD,"tmp/hmi-out.pipe", O_RDONLY)) < 0)
+		perror("hmi-output: openat pipe");
 
 	// Inizializzazione della stringa di input che rappresenta
 	// il messaggio da stampare a video sul terminale.
@@ -47,7 +44,7 @@ int main() {
 	// sul terminale da parte del processo.
 	while(true)
 		if((nread = read(pipe_fd, ECU_input, INPUT_MAX_LEN)) > 0 )
-			printf("%s", ECU_input);
+			printf("%s\n", ECU_input);
 }
 
 // Funzione per la gestione del segnale di errore

@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -17,7 +19,7 @@
 #define LOG_COMM_LEN 14
 
 // File descriptor del log file
-short int log_fd;
+int log_fd;
 
 void turn ( char * , short int);
 void no_action ( );
@@ -29,14 +31,14 @@ int main(){
 	 * Il protocollo impone che il pipe sia creato durante la fase di inizializzazione del processo central-ECU e che
 	 * venga aperto in sola lettura dal processo steer-by-wire il quale vi legga al bisogno. */
 	int pipe_fd;
-	if((pipe_fd = open ("../../tmp/steer.pipe", O_RDONLY | O_NONBLOCK)) < 0){
-		perror("open pipe");
+	if((pipe_fd = openat (AT_FDCWD, "tmp/steer.pipe", O_RDONLY | O_NONBLOCK)) < 0){
+		perror("openat steer pipe");
 		exit(EXIT_FAILURE);
 	}
 
 	// Creazione e apertura del log file e associazione del file descriptor
-	if((log_fd = open("../../log/steer.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
-		perror("open log");
+	if((log_fd = openat (AT_FDCWD, "log/steer.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
+		perror("openat steer log");
 		exit(EXIT_FAILURE);
 	}
 
@@ -67,7 +69,7 @@ int main(){
 				turn(log_phrase, RIGHT);
 				break;
 			case -1:
-				perror("read");
+				perror("steer: read");
 			default: no_action();
 		}
 	}
@@ -84,7 +86,7 @@ void turn ( char * log_phrase, short int direction){
 	// Si esegue la scrittura della log_phrase in steer.log per 4 volte (una volta al secondo per 4 secondi)
 	for(int i = 0; i < TURN_SECONDS; i++){
 		if(write(log_fd, log_phrase, LOG_MAX_LEN) < 0){
-			perror("write");
+			perror("steer: write");
 			exit(EXIT_FAILURE);
 		}
 		sleep(1);

@@ -1,10 +1,12 @@
 #define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include <signal.h>
+#include <errno.h>
 #include "../../include/service-functions.h"
 // MACROS
 // INPUT_MAX_LEN: lunghezza della stringa di input dalla central-ECU:
@@ -15,7 +17,7 @@
 #define LOG_PHRASE_LEN 32
 
 // File descriptor del log file
-short int log_fd;
+int log_fd;
 
 bool throttle_failed ( );
 
@@ -30,17 +32,14 @@ int main() {
    * venga aperto in sola lettura dal processo throttle-control il quale vi
    * legga al bisogno. */
   int pipe_fd;
-  if((pipe_fd = open("../../tmp/throttle.pipe", O_RDONLY)) < 0){
-    perror("open pipe");
+  if((pipe_fd = openat (AT_FDCWD, "tmp/throttle.pipe", O_RDONLY)) < 0){
+    perror("throttle: openat pipe");
     exit(EXIT_FAILURE);
   }
+  perror("throttle: CONNECTED");
 
-  if (unlink("../../log/throttle.log") < 0){
-    perror("unlink");
-    exit(EXIT_FAILURE);
-  }
-  if((log_fd = open("../../log/throttle.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
-    perror("open log");
+  if((log_fd = openat (AT_FDCWD, "log/throttle.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
+    perror("throttle: openat log");
     exit(EXIT_FAILURE);
   }
 
@@ -59,12 +58,13 @@ int main() {
    * Il pipe e` bloccante quindi il processo attende un messaggio dalla
 central-ECU */
   while (true) {
-    nread = read(pipe_fd, &increment, INPUT_MAX_LEN);
+    nread = read(pipe_fd, increment, INPUT_MAX_LEN);
     if (nread > 0) {
       if(!throttle_failed())
         time_log_func(log_fd, LOG_PHRASE_LEN, THROTTLE);
     } else {
-      perror("read");
+      perror("throttle: read");
+      printf("%d\n", errno);
       exit(EXIT_FAILURE);
     }
   }
@@ -90,7 +90,7 @@ central-ECU */
 bool throttle_failed() {
   if ((rand() % 100000) == 0) {
     if(kill(getppid(), SIGUSR1)){
-      perror("kill");
+      perror("throttle: kill");
       exit(EXIT_FAILURE);
     }
     return true;
