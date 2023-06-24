@@ -22,9 +22,9 @@ int main() {
   // aperto in sola lettura dal processo hmi-output il quale vi
   // legga non appena riceva un messaggio.
 	int pipe_fd;
-	if((pipe_fd = open("../tmp/hmi-out.pipe", O_RDONLY)) < 0){
+	if((pipe_fd = openat(AT_FDCWD,"../tmp/hmi-out.pipe", O_RDONLY)) < 0){
 		perror("open pipe");
-		exit(EXIT_FAILURE);
+		// exit(EXIT_FAILURE);
 	}
 
 	// Inizializzazione della stringa di input che rappresenta
@@ -33,7 +33,7 @@ int main() {
 	char * ECU_input = malloc(INPUT_MAX_LEN);
 	if(ECU_input == NULL){
 		perror("malloc");
-		exit(EXIT_FAILURE);
+		// exit(EXIT_FAILURE);
 	}
 	int nread;
 	printf("TERMINALE DI OUTPUT\n\n");

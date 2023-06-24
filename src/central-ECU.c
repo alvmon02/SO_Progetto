@@ -16,7 +16,6 @@
 #define PARK_BYTES_NUMBER 8
 #define TERMINAL_NAME_MAX_LENGTH 50
 #define MOD_LENGTH 12
-#define STDERR 2
 
 // struttura per salvare i processi con i loro pid, il gruppo a cui appartengono e la
 // pipe con cui comunicare col processo.
@@ -52,6 +51,12 @@ bool accettable_string(char *, int);
 int speed = 0;
 
 int main(int argc, char **argv){
+	int i = 0;
+	// apre un file di log per gli errori che sara' condiviso da tutti i processi figli
+	umask(0000);
+	// unlink("../log/errors.log");
+	int error_log_fd = openat(AT_FDCWD,"./log/errors.log", O_WRONLY | O_APPEND | O_CREAT, 0666);
+	dup2(error_log_fd, STDERR_FILENO);
 
 	// controlla che gli argomenti da linea di comando siano 2 o 4 per accettare la modalita'
 	// d'esecuzione e nel caso il terminale da usare per la hmi
@@ -68,25 +73,29 @@ int main(int argc, char **argv){
 	} else
 		modalita = argv[1];
 
+	printf("Ciao\n");
+	struct pipe_process *hmi_process = malloc(2*sizeof(struct pipe_process));
+	hmi_init(hmi_process, 2);
+	processes_groups.hmi_group = (hmi_process + READ)->pgid;
+	(hmi_process + WRITE)->pgid = processes_groups.hmi_group;
+
 	// se c'e' imposta il terminale scelto dall'utente
+	char *term_command = malloc(TERMINAL_NAME_MAX_LENGTH);
 	if(argc == 4 && !(strcmp(argv[2], "--term"))) {
 		if(!fork()) {
-			char *term_command = malloc(TERMINAL_NAME_MAX_LENGTH);
-			sprintf(term_command,"./sh/new_terminal.sh %s\0", argv[3]);
-			execlp("/usr/bin/bash","bash","-c", term_command, NULL);
+			sprintf(term_command,"./sh/new_terminal.sh %s", argv[3]);
+			execlp(term_command, NULL);
+			// execlp("/usr/bin/bash","bash","-c", term_command, NULL);
 		}
+	} else {
+		execlp("./sh/new_terminal.sh", NULL);
 	}
-
-	// apre un file di log per gli errori che sara' condiviso da tutti i processi figli
-	umask(000);
-	unlink("../log/errors.log");
-	int error_log_fd = open("../log/errors.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
-	dup2(STDERR, error_log_fd);
 
 	// inizializza tutti i processi figli salvando dove necessario l'intero processo
 	// in una struct pipe_process (nel caso di brake-by-wire, windshield-camera e park-assist)
 	// mentre negli altri casi vengono salvati solo i file descriptor della pipe che serve per
 	// comunicare con il nuovo processo
+	printf("Questo perche' non me lo stampa??\n");
 	brake_process = brake_init();
 	int steer_pipe_fd = steer_init(brake_process.pgid);
 	int throttle_pipe_fd = throttle_init(brake_process.pgid);
@@ -95,16 +104,18 @@ int main(int argc, char **argv){
 	pid_t sensor_signal = -camera_process.pgid;
 	int radar_pipe_fd = radar_init(camera_process.pgid, modalita);
 	processes_groups.sensors_group = camera_process.pgid;
-	struct pipe_process *hmi_process = malloc(2*sizeof(struct pipe_process));
-	hmi_init(hmi_process, 2);
-	processes_groups.hmi_group = hmi_process->pgid;
 	unlink("../log/ECU.log");
 	int log_fd = open("../log/ECU.log", O_WRONLY | O_APPEND | O_CREAT, 0644);
 
+	printf("%d: questo appare una sola volta????\n", i);
+
+	printf("%d: perche' appare cosi' spesso????\n", i);
+	i++;
 	// questa variabile mi serve nel caso venga chiamato PARCHEGGIO da hmi prima che
 	// venga digitato INIZIO. In questo caso diventa false e l'auto viene parcheggiata
 	// immediata senza iniziare il viaggio
 	bool travel_flag = true;
+	printf("%d\n", travel_flag);
 
 	// ciclo d'attesa prima dell'inizio del viaggio
 	int hmi_command;
@@ -204,53 +215,54 @@ int main(int argc, char **argv){
 
 struct pipe_process brake_init() {
 	struct pipe_process brake_process;
+	brake_process.pipe_fd = initialize_pipe("./tmp/brake.pipe", O_WRONLY, 0664);
 	brake_process.pid = make_process("brake-by-wire", 14, NULL);
 	brake_process.pgid = getpgid(brake_process.pid);
-	brake_process.pipe_fd = initialize_pipe("../tmp/brake.pipe", O_WRONLY, 0664);
 	return brake_process;
 }
 
 int steer_init(pid_t actuator_group) {
-	int pipe_fd = initialize_pipe("../tmp/steer.pipe", O_WRONLY, 0664);
+	int pipe_fd = initialize_pipe("./tmp/steer.pipe", O_WRONLY, 0664);
 	setpgid(make_process("steer-by-wire",14, NULL), actuator_group);
 	return pipe_fd;
 }
 
 int throttle_init(pid_t actuator_group) {
-	int pipe_fd = initialize_pipe("../tmp/throttle.pipe", O_WRONLY, 0664);
+	int pipe_fd = initialize_pipe("./tmp/throttle.pipe", O_WRONLY, 0664);
 	setpgid(make_process("throttle-control", 17, NULL), actuator_group);
 	return pipe_fd;
 }
 
 struct pipe_process camera_init() {
 	struct pipe_process camera_process;
+	camera_process.pipe_fd = initialize_pipe("./tmp/camera.pipe", O_RDONLY, 662);
 	camera_process.pid = make_process("windshield-camera", 18, NULL);
 	camera_process.pgid = getpgid(camera_process.pid);
-	camera_process.pipe_fd = initialize_pipe("../tmp/camera.pipe", O_RDONLY, 662);
 	return camera_process;
 }
 
 int radar_init(pid_t sensors_group, char *modalita) {
+	pid_t radar_fd = initialize_pipe("./tmp/radar.pipe", O_RDONLY, 662);
 	setpgid(make_sensor("RADAR", modalita), sensors_group);
-	return initialize_pipe("../tmp/radar.pipe", O_RDONLY, 662);
+	return radar_fd;
 }
 
 void hmi_init(struct pipe_process *hmi_processes, int processes_number) {
+	(hmi_processes + READ)->pipe_fd = initialize_pipe("../tmp/hmi-in.pipe", O_RDONLY, 0662);
+	(hmi_processes + WRITE)->pipe_fd = initialize_pipe("../tmp/hmi-out.pipe", O_WRONLY, 0664);
 	(hmi_processes + READ)->pid = make_process("hmi-input", 10, NULL);
 	(hmi_processes + WRITE)->pid = make_process("hmi-output", 11, NULL);
 	(hmi_processes + READ)->pgid = getpgid((hmi_processes + READ)->pid);
 	setpgid((hmi_processes + WRITE)->pid, (hmi_processes + READ)->pgid);
 	(hmi_processes + WRITE)->pgid = getpgid((hmi_processes + READ)->pid);
-	(hmi_processes + READ)->pipe_fd = initialize_pipe("../tmp/hmi-input.pipe", O_RDONLY, 0662);
-	(hmi_processes + WRITE)->pipe_fd = initialize_pipe("../tmp/hmi-output.pipe", O_WRONLY, 0664);
 	return;
 }
 
 struct pipe_process park_assist_init(char *modalita) {
 	struct pipe_process park_process;
+	park_process.pipe_fd = initialize_pipe("./tmp/assist.pipe", O_RDONLY, 0662);
 	park_process.pid = make_process("park-assist", 12, modalita);
 	park_process.pgid = getpgid(park_process.pid);
-	park_process.pipe_fd = initialize_pipe("../tmp/assist.pipe", O_RDONLY, 0662);
 	return park_process;
 }
 
