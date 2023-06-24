@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -24,9 +25,9 @@ int main() {
   // aperto in sola scrittura dal processo hmi-input il quale vi
   // scriva non appena riceva da tastiera attraverso il terminale di input.
 	int pipe_fd;
-	if((pipe_fd = open("../tmp/hmi-in.pipe", O_WRONLY)) < 0){
+	while((pipe_fd = openat(AT_FDCWD, "tmp/hmi-in.pipe", O_WRONLY)) < 0){
 		perror("open pipe");
-		exit(EXIT_FAILURE);
+		sleep(1);
 	}
 
 
