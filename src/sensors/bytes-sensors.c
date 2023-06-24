@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -42,12 +43,14 @@ int main(int argc, char * argv[]){
 	// da cui ottenere i bytes di input.
 	// Il file aperto dipende dalla modalità di esecuzione scelta.
 	int input_fd;
-	if(!strcmp(argv[1], NORMALE))
-		input_fd = open("/dev/urandom", O_RDONLY);
-	else if (!strcmp(argv[1], ARTIFICIALE))
-		input_fd = open("../../urandomARTIFICIALE.binary", O_RDONLY);
-	else{
-		perror("chiamata modalita:");
+	if(!strcmp(argv[1], NORMALE)){
+		if((input_fd = open("/dev/urandom", O_RDONLY)) < 0)
+			perror("bytes-sensors: open input");
+	} else if (!strcmp(argv[1], ARTIFICIALE)){
+		if((input_fd = openat(AT_FDCWD, "urandomARTIFICIALE.binary", O_RDONLY)) < 0)
+			perror("bytes-sensors: open input");
+	} else {
+		perror("bytes sensors: chiamata modalita:");
 		exit(EXIT_FAILURE);
 	}
 
@@ -55,36 +58,28 @@ int main(int argc, char * argv[]){
   // Qualora il file non esista viene creato. Qualora il file sia presente
   // si mantengono le precedenti scritture.
 	if(!strcmp(argv[2], RADAR)){
-		if(unlink("../../log/radar.log") < 0){
-			perror("unlink");
+		if((log_fd = openat(AT_FDCWD, "log/radar.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
+			perror("bytes-sensors: openat log");
 			exit(EXIT_FAILURE);
 		}
-		if((log_fd = open("../../log/radar.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
-			perror("open log");
-			exit(EXIT_FAILURE);
-		}
-		if((comm_fd = open("../../tmp/radar.pipe", O_WRONLY)) < 0){
-			perror("open pipe");
-			exit(EXIT_FAILURE);
+		while((comm_fd = openat(AT_FDCWD, "tmp/radar.pipe", O_WRONLY)) < 0){
+			perror("bytes-sensors: openat pipe");
+			sleep(1);
 		}
 	} else if (!strcmp(argv[2], CAMERAS)){
-		if(unlink("../../log/cameras.log") < 0){
-			perror("unlink");
+		if((log_fd = openat (AT_FDCWD, "log/cameras.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
+			perror("bytes-sensors: openat log");
 			exit(EXIT_FAILURE);
 		}
-		if((log_fd = open("../../log/cameras.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
-			perror("open log");
-			exit(EXIT_FAILURE);
-		}
-		if((comm_fd = open("../../tmp/cameras.pipe", O_WRONLY)) < 0){
-			perror("open pipe");
-			exit(EXIT_FAILURE);
+		while((comm_fd = openat (AT_FDCWD, "tmp/cameras.pipe", O_WRONLY)) < 0){
+			perror("bytes-sensors: openat pipe");
+			sleep(1);
 		}
 	} else{
-		perror("chiamata: tipologia funzione");
+		perror("bytes-sensors: chiamata: tipologia funzione");
 		exit(EXIT_FAILURE);
 	}
-
+	perror("bytes-sensors: CONNECTED");
 	// Inizializzazione della stringa di input che rappresenta l'insieme di byte
   // da trasmettere alla central-ECU da parte del processo.
   // La stringa di unsigned char viene tradotta in una stringa di char lunga

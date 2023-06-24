@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -23,28 +25,25 @@ int main ( ) {
   // durante la fase di inizializzazione del processo central-ECU e che venga
   // aperto in sola scrittura dal processo windshield-camera il quale vi scriva
   // una volta al secondo.
-  if((pipe_fd = open("../tmp/camera.pipe", O_WRONLY))){
-    perror("open pipe");
-    exit(EXIT_FAILURE);
+  while((pipe_fd = openat(AT_FDCWD, "tmp/camera.pipe", O_WRONLY)) < 0){
+    perror("windshield: openat pipe");
+    sleep(1);
   }
+  perror("windshield: CONNECTED");
   // Connessione del file descriptor del log file. Apertura in sola scrittura.
   // Qualora il file non esista viene creato. Qualora il file sia presente
   // si mantengono le precedenti scritture. Data l'esecuzione dell'unlink
   // da parte della central-ECU, non vi saranno scritture pendenti da
   // precedenti esecuzioni.
-  if(unlink("../../log/camera.log") < 0){
-    perror("unlink log");
-    exit(EXIT_FAILURE);
-  }
-  if((log_fd = open("../../log/camera.log", O_WRONLY | O_APPEND | O_CREAT, 0644)) < 0){
-    perror("open log");
+  if((log_fd = openat(AT_FDCWD, "log/camera.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
+    perror("windshield: openat log");
     exit(EXIT_FAILURE);
   }
   // Inizializzazione e connessione del file descriptor al file da cui
   // ottenere i dati di input. Apertura in sola lettura all'inizio del file.
   int input_fd;
-  if((input_fd = open("../include/frontCamera.data", O_RDONLY)) < 0){
-    perror("open input");
+  if((input_fd = openat(AT_FDCWD, "frontCamera.data", O_RDONLY)) < 0){
+    perror("windshield: open input");
     exit(EXIT_FAILURE);
   }
 
@@ -66,9 +65,9 @@ int main ( ) {
   // EOF (=0).
   while (true) {
     if((nread = read(input_fd, camera_input, INPUT_MAX_LEN)) < 0){
-      perror("read");
+      perror("windshield: read");
       exit(EXIT_FAILURE);
-    } else if (nread){
+    } else if (nread > 0){
       broad_log(pipe_fd, log_fd, camera_input, INPUT_MAX_LEN);
       sleep(1);
     } else
