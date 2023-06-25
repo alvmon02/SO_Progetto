@@ -10,7 +10,7 @@
 
 #define OUTPUT_MAX_LEN 11
 
-int acceptable_input ( char * );
+unsigned short int acceptable_input ( char * );
 void throttle_failed_handler(int);
 
 // La funzione main esegue le operazioni relative al componente
@@ -58,10 +58,10 @@ int main() {
 			exit(EXIT_FAILURE);
 		}
 		getchar();
-		int input_flag = acceptable_input(term_input);
+		unsigned short int input_flag = acceptable_input(term_input);
 		printf("%d\n", input_flag);
-		if(input_flag >= 0){
-			if(write(pipe_fd, &input_flag, sizeof(int)) < 0){
+		if(input_flag < 4){
+			if(write(pipe_fd, &input_flag, sizeof(short int)) < 0){
 				perror("hmi-input: write");
 				exit(EXIT_FAILURE);
 			}
@@ -81,7 +81,7 @@ int main() {
 // I comandi accettati sono AVVIO, PARCHEGGIO e ARRESTO.
 // Non e` stata utilizzata la funzione strcasecmp perché il programma
 // favorisse una maggiore portabilità.
-int acceptable_input (char * input){
+unsigned short int acceptable_input (char * input){
 	char * upper = str_toupper(input);
 	if(strcmp(upper, "INIZIO") == 0)
 		return INIZIO;
@@ -90,7 +90,7 @@ int acceptable_input (char * input){
 	else if (strcmp(upper, "PARCHEGGIO") == 0)
 		return PARCHEGGIO;
 	else
-		return -1;
+		return 4;
 }
 
 void throttle_failed_handler (int sig){

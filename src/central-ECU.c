@@ -125,11 +125,12 @@ int main(int argc, char **argv){
 	// immediata senza iniziare il viaggio
 	bool travel_flag = true;
 	bool flag_arrest = true;
-	int hmi_command;
+	unsigned short int hmi_command;
 	// ciclo d'attesa prima dell'inizio del viaggio
 	do {
-		read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(int));
-		printf("%d\n", hmi_command);
+		if(read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(short int)) <= 0)
+			perror("ECU: command read");
+		printf("hmi command: %u\n", hmi_command);
 		if(hmi_command == PARCHEGGIO)
 			travel_flag = false;
 		flag_arrest = (hmi_command == ARRESTO);
@@ -143,7 +144,7 @@ int main(int argc, char **argv){
 		read(radar_pipe_fd, radar_buf, RADAR_BYTES_NUMBER);
 		// legge dalla hmi esce arresta la macchina o esce dal ciclo del viaggio
 		// per frenare e poi eseguire la procedura di parcheggio
-		if(read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(int)) > 0){
+		if(read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(short int)) > 0){
 			if(hmi_command == PARCHEGGIO)
 				break;
 			else if(hmi_command == ARRESTO)
