@@ -62,15 +62,19 @@ int main(){
 	while(true){
 		nread = read(pipe_fd, action, sizeof(action));
 		switch(nread){
-			case 8:
-				turn(log_phrase, LEFT);
-				break;
+
 			case 7:
 				turn(log_phrase, RIGHT);
+				perror("steer: red left");
 				break;
-			case -1:
-				perror("steer: read");
-			default: no_action();
+
+			case 8:
+				turn(log_phrase, LEFT);
+				perror("steer: red left");
+				break;
+
+			default:
+				no_action();
 		}
 	}
 }

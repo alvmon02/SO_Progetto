@@ -17,15 +17,16 @@
 	#define RADAR "RADAR"
 	#define CAMERAS "CAMERAS"
 	#define ASSIST "ASSIST"
-	#define BYTES_LEN 8
 	#define SURR_CAM_LEN 8
 	#define PARK_TIME 30
 	#define CONTINUE 0
 	#define RELOAD 1
+	#define BYTES_LEN 8
+	#define BYTES_CONVERTED 17
 
 	int initialize_pipe(char * pipe_pathname, int flags, mode_t mode);
 
-	void hex(unsigned char* to_conv, size_t size,  char* converted);
+	void hex(unsigned char* to_conv, size_t size_to_conv,  char* converted);
 
 	void broad_log (int pipe_fd, int log_fd, char * message, size_t size);
 
@@ -35,7 +36,7 @@
 
 	void time_log_func ( int log_fd, size_t size, short int proc);
 
-	pid_t make_process(char *program_name, int name_length, char *args);
+	pid_t make_process(char *program_name, int name_length, pid_t pgid, char *args);
 
 	pid_t make_sensor(char *, char *);
 

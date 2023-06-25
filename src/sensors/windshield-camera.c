@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <signal.h>
 #include "../../include/service-functions.h"
 
 // MACROS
@@ -12,13 +13,20 @@
 // input: "PARCHEGGIO\0"
 #define INPUT_MAX_LEN 11
 
+void start_handler ( int );
+
 // File descriptor del log file
 int log_fd;
 // File descriptor del pipe in scrittura
 int pipe_fd;
 
+int input_fd;
+
+bool start_flag = false;
+
 //La funzione main esegue le operazioni relative al componente windshield-camera
 int main ( ) {
+  signal(SIGUSR1, start_handler);
 
   // Connessione del file descriptor del pipe per la comunicazione tra central
   // ECU e windshield-camera. Il protocollo impone che il pipe sia creato
@@ -41,20 +49,23 @@ int main ( ) {
   }
   // Inizializzazione e connessione del file descriptor al file da cui
   // ottenere i dati di input. Apertura in sola lettura all'inizio del file.
-  int input_fd;
   if((input_fd = openat(AT_FDCWD, "frontCamera.data", O_RDONLY)) < 0){
     perror("windshield: open input");
     exit(EXIT_FAILURE);
+  }
+
+  while(!start_flag){
+    perror("windshield: start_flag is false");
+    sleep(1);
   }
 
   // Inizializzazione della stringa di input che rappresenta il messaggio da
   // trasmettere alla central-ECU da parte del processo.
   char *camera_input = malloc(INPUT_MAX_LEN);
   if(camera_input == NULL){
-    perror("malloc");
+    perror("windshield: malloc");
     exit(EXIT_FAILURE);
   }
-  int nread;
 
   // Il ciclo successivo rappresenta il cuore del processo.
   // Ad ogni lettura del file di input accadrà che il file non ha
@@ -63,14 +74,20 @@ int main ( ) {
   // Fintantoché il file non termina i dati vengono trasmessi alla
   // central-ECU, una volta terminato il processo termina con codice
   // EOF (=0).
+  FILE * input_file = fdopen(input_fd, "r");
   while (true) {
-    if((nread = read(input_fd, camera_input, INPUT_MAX_LEN)) < 0){
+   if(fgets(camera_input, INPUT_MAX_LEN, input_file)  == NULL){
       perror("windshield: read");
-      exit(EXIT_FAILURE);
-    } else if (nread > 0){
+      exit(EXIT_SUCCESS);
+    } else {
+      printf("%s", camera_input);
       broad_log(pipe_fd, log_fd, camera_input, INPUT_MAX_LEN);
       sleep(1);
-    } else
-      exit(EXIT_SUCCESS);
+    }
   }
+}
+
+void start_handler(int sig){
+  start_flag = true;
+  perror("windshield: handler: start_flag is true");
 }
