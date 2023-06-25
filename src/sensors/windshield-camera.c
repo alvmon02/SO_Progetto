@@ -80,7 +80,6 @@ int main ( ) {
       perror("windshield: read");
       exit(EXIT_SUCCESS);
     } else {
-      printf("%s", camera_input);
       broad_log(pipe_fd, log_fd, camera_input, INPUT_MAX_LEN);
       sleep(1);
     }

@@ -14,48 +14,54 @@
 #include "../../include/service-functions.h"
 
 
-void signal_start_handler(int sig);
+void signal_start_handler ( int );
+void restart_handler ( int );
 int log_open();
-int assist_pipe();
+int pipe_open();
 
-bool start;
+bool start_flag;
 bool restart_flag;
 
-int main(int argc, char *argv[])
-{
-	start = false;
-	int pid,
-		log_assist_fd,
+int main(int argc, char *argv[]){
+
+	start_flag = false;
+	pid_t cameras_pid;
+	int log_fd,
 		cameras_fd,
 		assist_fd,
 		counter = 0;
 
-	signal(SIGUSR2,signal_start_handler);
+	signal(SIGUSR1,signal_start_handler);
+	signal(SIGUSR2, restart_handler);
 
-	while(!start)
-		sleep(1);
+	//Apertura del log file
+	log_fd = log_open();
 
 	unsigned char *bytes_read = malloc(BYTES_LEN);
 	char *hex_translation = malloc(BYTES_CONVERTED),
 		*mode = argv[1];
-	
-	//Connessione alla ECU
-	assist_fd = assist_pipe();
-	
-	//Apertura del log file
-	log_assist_fd = log_open();
 
-	int input_fd = openat(AT_FDCWD, (strcmp(mode, ARTIFICIALE)? "urandomARTIFICIALE.binary" : "/dev/urandom"), O_RDONLY);
+	int input_fd;
+	if(strcmp(mode, ARTIFICIALE))
+		input_fd= openat(AT_FDCWD, "urandomARTIFICIALE.binary", O_RDONLY);
+	else
+		input_fd = open("/dev/urandom", O_RDONLY);
 
 	//Creazione di un processo figlio per la gestione del surround-view-cameras
-	pid = make_sensor(CAMERAS, mode);
+	cameras_pid = make_sensor(CAMERAS, mode);
 	// Creazione della pipe per leggere la informazione
 	// arrivata da bytes-sensor
 	cameras_fd = initialize_pipe("tmp/cameras.pipe", O_RDONLY, 0666);
 
+		//Connessione alla ECU
+	assist_fd = pipe_open();
+
+	while(!start_flag)
+		sleep(1);
+
 	while(true){
 		restart_flag = false;
-		while (counter++ < PARK_TIME && restart_flag) {
+		while (counter++ < PARK_TIME) {
 			// La Scrittura della informazione sulla pipe di comunicazione con la ECU
 			// fatta nella funzione broad_log, anche con la scrittura della info
 			// sullo file assist.log.
@@ -64,24 +70,29 @@ int main(int argc, char *argv[])
 			// dato che cominzia con la lettura da park_assist,
 			// e dopo si traduce il messagio, per il invio
 			// a la ECU.
-			read_conv_broad(input_fd, bytes_read, hex_translation, assist_fd, log_assist_fd);
+
+			read_conv_broad(input_fd, bytes_read, hex_translation, assist_fd, log_fd);
+			perror("park assist: read_borad_log");
 
 			read(cameras_fd, bytes_read, BYTES_LEN);
 			hex(bytes_read, BYTES_LEN, hex_translation);
 			write(assist_fd, hex_translation, BYTES_CONVERTED);
+			perror("park assist: cameras transmit");
 
-			sleep(1);
 		}
-		kill(pid,SIGTSTP);
+		kill(getppid(), SIGUSR2);
+		perror("park: kill parent usr2");
+		kill(cameras_pid,SIGTSTP);
 		while(!restart_flag)
 			sleep(1);
+		kill(cameras_pid, SIGCONT);
 	}
 }
 
 int log_open(){
 	int fd;
 		//Apertura del logfile
-	fd = openat(AT_FDCWD, "log/assist.log",O_WRONLY | O_APPEND | O_CREAT,0666);
+	fd = openat(AT_FDCWD, "log/assist.log",O_WRONLY | O_TRUNC | O_CREAT,0666);
 	if (fd < 0){
 		perror("park assist: openat log");
 		exit(EXIT_FAILURE);
@@ -89,15 +100,16 @@ int log_open(){
 	return fd;
 }
 
-int assist_pipe(){
+int pipe_open(){
 	int fd;
-	while((fd = openat(AT_FDCWD, "tmp/assist.pipe",O_WRONLY | O_TRUNC | O_CREAT,0666) < 0));
-	perror("park assist: CONNECTED");
+	while((fd = openat(AT_FDCWD, "tmp/assist.pipe", O_WRONLY | O_NONBLOCK, 0666)) < 0 )
+		sleep(1);
+	perror("park: pipe CONNECTED");
 	return fd;
 }
 
 void signal_start_handler(int sig){
-	start = true;
+	start_flag = true;
 }
 
 void restart_handler (int sig){

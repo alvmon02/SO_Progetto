@@ -90,9 +90,8 @@ int main(int argc, char * argv[]){
   // stringa decodificata per immagazzinare i caratteri ASCII appropriati.
   // Il +1 nella stringa decodificata  e` necessario per inserirvi il carattere
 	// di terminazione riga '\n'.
-  unsigned char input_str[INPUT_LEN];
-	char input_hex[(INPUT_LEN *2) +1];
-	input_hex[INPUT_LEN *2] = '\n';
+  unsigned char input_str[BYTES_LEN];
+	char input_hex[BYTES_CONVERTED];
 
 	// Il ciclo successivo e` il cuore del processo.
 	// Una volta al secondo esegue una read sul file descriptor del file di

@@ -96,14 +96,17 @@ void throttle_failed_handler (int sig){
 }
 
 void input_error_handler (int sig ){
-	printf("Digitazione del comando errata, inserire una "
+	char str[117] = "Digitazione del comando errata, inserire una "
 						 "delle seguenti parole e premere invio:\n"
 						 "- INIZIO\n"
 						 "- PARCHEGGIO\n"
-						 "- ARRESTO\n");
+						 "- ARRESTO\n";
+	write(STDOUT_FILENO, str, 117);
 }
 
 void interrupt_handler(int sig){
-	kill(getppid(), SIGINT);
+	if(kill(getppid(), SIGINT) < 0)
+		perror("hmi-input: kill ppid");
+	exit(EXIT_SUCCESS);
 }
 
