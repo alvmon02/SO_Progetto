@@ -11,15 +11,14 @@
 #include <signal.h>  /*per il uso di segnali*/
 #include "../../include/service-functions.h"
 
-#define PARK_TIME 30
-
 short int start;
 
 void signal_start_handler(int sig);
-void files_opening(int* log_assist_fd, int* bin_file_fd, char* bin_file_path);
+int log_open();
+int ECU_pipe();
 
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
 	start = 0;
 	signal(SIGUSR2,signal_start_handler);
@@ -31,55 +30,43 @@ int main(int argc, char const *argv[])
 		counter = 0;
 		
 	char *message_to_ECU,
-		 *aux_hex,
-		 *system_random = "/dev/urandom",
-		 *artificial_random = "../../urandomARTIFICIALE.binary";
+		 *hex_translation,
+		 *mode = argv[1];
 	
-	unsigned char *read_aux;
+	unsigned char *bytes_read;
 	
 		//Connessione alla ECU
-	ECU_pipe_fd = open("../tmp/assist.pipe",O_WRONLY);
-	if (ECU_pipe_fd == -1){
-		perror("Errore nell'apertura della pipe");
-		exit(EXIT_FAILURE);
-	}
+	ECU_pipe_fd = ECU_pipe();
 	
-		//Apertura dei file di log e binario
-	files_opening(&log_assist_fd, &bin_file_fd,system_random);
+		//Apertura del log file
+	log_assist_fd = log_open();
 	
 		//Creazione di un processo figlio per la gestione del surround-view-cameras
-	pid = fork();
-	if (pid != 0)
-	{
-			//Eliminazione di qualsiasi pipe con lo stesso nome
-		unlink("../tmp/cameras.pipe");
+	pid = make_sensor(CAMERAS,mode);
+	if (pid > 0){
 		
-			//Creazione della pipe per la comunicazione con il surround-view-cameras
-		park_assist_pipe_fd = initialize_pipe("cameras.pipe",O_RDONLY,0666);
-		
-			//Inizializazione dello eseguibile surround-view-cameras
-		execl("../../bin/bytes-sensors","bytes-sensors",ASSIST,NULL);
+		// Creazione della pipe per leggere la informazione
+		// arrivata da bytes-sensor
+		park_assist_pipe_fd = initialize_pipe("./tmp/cameras.pipe",O_CREAT | O_WRONLY,0666);		
 		
 		while (counter < PARK_TIME)
 		{
-				//Lettura della informazione dalla pipe
-			read(park_assist_pipe_fd,message_to_ECU,SURR_CAM_LEN + 1);
+			// La Scrittura della informazione sulla pipe di comunicazione con la ECU
+			// fatta nella funzione broad_log, anche con la scrittura della info
+			// sullo file assist.log.
+			// La Lettura della informazione dalla pipe
+			// già fatta nella parte iniziale di read_conv_broad,
+			// dato che cominzia con la lettura da park_assist,
+			// e dopo si traduce il messagio, per il invio
+			// a la ECU.
+			read_conv_broad(park_assist_pipe_fd,bytes_read,hex_translation,ECU_pipe_fd,log_assist_fd);
 			
-				//Scrittura della informazione sulla pipe di comunicazione con la ECU
-			write(ECU_pipe_fd,message_to_ECU,SURR_CAM_LEN + 1);
-			
-				/**
-				 * Lettura della informazione dal file binario e invio
-				 * della stessa allo log file, mentre che contemporaneamente
-				 * si invia la informazione alla ECU
-				 */
-			read_conv_broad(bin_file_fd,read_aux,aux_hex,ECU_pipe_fd,log_assist_fd);
 			sleep(1);
 			counter++;
 		}
 		kill(pid,SIGTSTP);
 	
-		if(pid == 0 && counter == PARK_TIME)
+		if(pid <= 0 && counter == PARK_TIME)
 			kill(getppid(),SIGUSR2);
 	}	
 
@@ -91,21 +78,28 @@ int main(int argc, char const *argv[])
 	return EXIT_SUCCESS;
 }
 
-void files_opening(int* log_assist_fd, int* bin_file_fd, char* bin_file_path)
-{
+int log_open(){
+	int fd = -1;
 		//Apertura del logfile
-	*log_assist_fd = open("../../log/assist.log",O_WRONLY | O_APPEND | O_CREAT,0666);
-	if (*log_assist_fd == -1){
+	fd = open("./log/assist.log",O_WRONLY | O_APPEND | O_CREAT,0666);
+	if (fd == -1){
 		perror("Errore nell'apertura del file di log");
 		exit(EXIT_FAILURE);
 	}
 	
-		//Apertura del file binario
-	*bin_file_fd = open(bin_file_path,O_RDONLY);
-	if (*bin_file_fd == -1){
-		perror("Errore nell'apertura del file binario");
+	return fd;
+}
+
+int ECU_pipe(){
+	int fd = -1;
+	
+	fd = open("./tmp/assist.pipe",O_WRONLY | O_APPEND | O_CREAT,0666);
+	if (fd == -1){
+		perror("Errore nell'apertura della pipe");
 		exit(EXIT_FAILURE);
 	}
+	
+	return fd;
 }
 
 void signal_start_handler(int sig){
