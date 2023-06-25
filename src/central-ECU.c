@@ -45,6 +45,7 @@ struct pipe_process park_assist_init( char *);
 void hmi_init(struct pipe_process *,int);
 void arrest(pid_t);
 void ECU_signal_handler(int);
+void parking_completed_handler(int);
 void send_command(int, int, int, char *, size_t);
 void change_speed(int, int, int, int, int);
 bool acceptable_string(char *);
@@ -52,6 +53,7 @@ bool acceptable_string(char *);
 struct pipe_process *hmi_process;
 
 int speed = 0;
+bool park_done_flag = false;
 
 int main(int argc, char **argv){
 	// apre un file di log per gli errori che sara' condiviso da tutti i processi figli
@@ -108,7 +110,7 @@ int main(int argc, char **argv){
 	// attivo il signal handler per l'errore nell'accelerazione e la conclusione
 	// di parcheggio
 	signal(SIGUSR1, ECU_signal_handler);
-	signal(SIGUSR2, ECU_signal_handler);
+	signal(SIGUSR2, parking_completed_handler);
 	signal(SIGINT, ECU_signal_handler);
 
 	hmi_process = malloc(2*sizeof(struct pipe_process));
@@ -141,7 +143,6 @@ int main(int argc, char **argv){
 				travel_flag = false;
 			case INIZIO:
 				flag_arrest = false;
-				printf("HOLA\n");
 				break;
 			case ARRESTO:
 				if(kill(hmi_process[READ].pid,SIGUSR2) <0)
@@ -196,50 +197,53 @@ int main(int argc, char **argv){
 		change_speed(0, throttle_pipe_fd, brake_process.pipe_fd, log_fd, hmi_process[WRITE].pipe_fd);
 		sleep(1);
 	}
-	printf("PIPPO VERAMENTE PIPPO!\n");
+
   // avvia la procedura di parcheggio
   if(kill(parking_signal, SIGINT) <0)
-		perror("ECU: kill");
+		perror("ECU: kill parking signal");
   char park_data[BYTES_CONVERTED];
   bool parking_completed = false;
   struct pipe_process park_process;
   park_process = park_assist_init(modalita);
   processes_groups.park_assist_group = park_process.pgid;
+
   while (!parking_completed) {
-    kill(park_process.pid, SIGUSR2);
+		sleep(1);
+		broad_log(hmi_process[WRITE].pipe_fd, log_fd, "INIZIO PROCEDURA PARCHEGGIO\n", sizeof("INIZIO PROCEDURA PARCHEGGIO\n"));
+    if(kill(park_process.pid, SIGUSR1) < 0)
+			perror("ECU: park start signal");
 		int nread = 1;
-    while(nread > 0 ) {
-			read(park_process.pipe_fd, park_data, BYTES_CONVERTED);
+    while( !park_done_flag || nread > 0 ) {
+			nread = read(park_process.pipe_fd, park_data, BYTES_CONVERTED);
+			perror("ECU: read park");
       if(!acceptable_string(park_data))
         break;
-			nread = read(park_process.pipe_fd, park_data, BYTES_CONVERTED);
-			if(!acceptable_string(park_data))
-        break;
-      sleep(1);
     }
-    if(!parking_completed)
-      kill(park_process.pid, SIGUSR1);  // DA IMPOSTARE IN PARK ASSIST CORRETTA GESTIONE DEL SEGNALE (RELOAD)
+
+    if(park_done_flag && nread <= 0){
+			parking_completed = true;
+			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO COMPLETATA\n", sizeof("PROCEDURA PARCHEGGIO COMPLETATA\n"));
+		} else {
+			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO INCLOMPLETA\n", sizeof("PROCEDURA PARCHEGGIO INCOMPLETA\n"));
+      kill(park_process.pid, SIGUSR2);
+		}
   }
+	sleep(1);
+  broad_log(hmi_process[WRITE].pipe_fd, log_fd, "TERMINAZIONE PROGRAMMA\n", sizeof("TERMINAZIONE PROGRAMMA\n"));
 
   // termino i processi dei sensori, degli attuatori e di park-assist
   kill(park_process.pid, SIGKILL);
   kill(sensor_signal, SIGKILL);
-
-  // ora mando un segnale SIGUSR1 alla hmi cosi' stampa a schermo la completata esecuzione
-  // per poi arrestarsi
-  kill(-(processes_groups.hmi_group), SIGUSR1);
+	kill(hmi_process[READ].pid, SIGKILL);
 
   return 0;
 }
-
 
 struct pipe_process brake_init() {
 	struct pipe_process brake_process;
 	brake_process.pid = make_process("brake-by-wire", 14, 0, NULL);
 	brake_process.pipe_fd = initialize_pipe("tmp/brake.pipe", O_WRONLY, 0666);
 	brake_process.pgid = getpgid(brake_process.pid);
-	printf("%d\t%d\n", brake_process.pid, getpgid(brake_process.pid));
-	perror("ECU: brake_init:");
 	return brake_process;
 }
 
@@ -261,7 +265,6 @@ struct pipe_process camera_init() {
 	camera_process.pipe_fd = initialize_pipe("tmp/camera.pipe", O_RDONLY, 0666);
 	camera_process.pgid = getpgid(brake_process.pid);
 	setpgid(camera_process.pid, brake_process.pgid);
-	printf("%d\t%d\t%d\t%d\n", getpgid(camera_process.pid), camera_process.pgid, getpgid(brake_process.pid), brake_process.pgid);
 	return camera_process;
 }
 
@@ -282,8 +285,8 @@ void hmi_init(struct pipe_process *hmi_processes, int processes_number) {
 
 struct pipe_process park_assist_init(char *modalita) {
 	struct pipe_process park_process;
-	park_process.pid = make_process("park-assist", 12,0, modalita);
-	park_process.pipe_fd = initialize_pipe("tmp/assist.pipe", O_RDONLY, 0666);
+	park_process.pid = make_process("park-assist", 12, 0, modalita);
+	park_process.pipe_fd = initialize_pipe("tmp/assist.pipe", O_RDONLY | O_NONBLOCK, 0666);
 	park_process.pgid = getpgid(park_process.pid);
 	return park_process;
 }
@@ -297,23 +300,23 @@ void ECU_signal_handler (int sig){
 		kill(-(processes_groups.actuators_group), SIGKILL);
 		kill(-(processes_groups.sensors_group), SIGKILL);
 		kill(-(processes_groups.hmi_group), SIGUSR1);
-	} else if(sig == SIGUSR2) {
-		// significa che park_assist ha concluso la procedura di parcheggio
-		kill(processes_groups.park_assist_group, SIGKILL);
-		kill(processes_groups.sensors_group, SIGKILL);
-		// QUI ORA UCCIDO LA HMI MA PRIMA VOGLIO MANDARE UN SEGNALE DIFFERENT
-		kill(-(processes_groups.hmi_group), SIGUSR1);
-	} else if(sig == SIGINT){
+	}  else if(sig == SIGINT){
 				// significa che park_assist ha concluso la procedura di parcheggio
-		kill(processes_groups.park_assist_group, SIGKILL);
-		kill(processes_groups.sensors_group, SIGKILL);
-		// QUI ORA UCCIDO LA HMI MA PRIMA VOGLIO MANDARE UN SEGNALE DIFFERENTE
-		kill(-(processes_groups.hmi_group), SIGKILL);
+		if(kill(-processes_groups.actuators_group, SIGKILL) < 0)
+			perror("ECU: kill actuators");
+		kill(-processes_groups.sensors_group, SIGKILL);
+		kill(-processes_groups.park_assist_group, SIGKILL);
+		kill(-processes_groups.hmi_group, SIGKILL);
 	}
 		umask(022);
 		// LA SLEEP SERVE A DARE TEMPO ALLA HMI DI MOSTRARE UN MESSAGGIO PRIMA DI CHIUDERSI
 		sleep(3);
 		exit(EXIT_SUCCESS);
+}
+
+void parking_completed_handler(int sig){
+	// significa che park_assist ha concluso la procedura di parcheggio
+	park_done_flag = true;
 }
 
 void arrest(pid_t brake_process) {
