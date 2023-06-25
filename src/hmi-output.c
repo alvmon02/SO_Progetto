@@ -7,16 +7,17 @@
 #include <stdbool.h>
 
 // INPUT_MAX_LEN: lunghezza massima del messaggio ricevuto in input dalla central-ECU
-#define INPUT_MAX_LEN 13
+#define INPUT_MAX_LEN 14
 
 void throttle_failed_handler ( int );
-void interrupt_handler (int );
+void park_handler (int );
 
 // La funzione main esegue le operazioni relative al componente
 // di output, noto come human-machine-interface_output, abbreviato hmi-output
 int main() {
 
 	signal(SIGUSR1, throttle_failed_handler);
+	signal(SIGINT, park_handler);
 
 	// Connessione del file descriptor del pipe per la comunicazione tra central
   // ECU e hmi-output. Il protocollo impone che il pipe sia creato
@@ -44,17 +45,18 @@ int main() {
 	// sul terminale da parte del processo.
 	while(true)
 		if((nread = read(pipe_fd, ECU_input, INPUT_MAX_LEN)) > 0 )
-			printf("%s\n", ECU_input);
+			printf("%s", ECU_input);
 }
 
 // Funzione per la gestione del segnale di errore
 // Esegue la scrittura sul terminale tramite una write (vedi manuale signal-safety(7)) per mostrare l'interruzione del programma e la terminazione dell'intero programma.
 void throttle_failed_handler ( int sig ){
-	write(STDOUT_FILENO, "\nVEICOLO ARRESTATO.\nFallimento accelerazione.\nTerminazione totale esecuzione programma.\n", 89);
+	write(STDOUT_FILENO, "\nVEICOLO ARRESTATO.\nFallimento accelerazione.\nTerminazione totale del programma.\n", 81);
 	exit(EXIT_SUCCESS);
 }
 
-void interrupt_handler( int sig ) {
+void park_handler( int sig ) {
+	write(STDOUT_FILENO, "\nPARCHEGGIO COMPLETATO.\nTerminazione totale del programma.\n", 59);
 	exit(EXIT_SUCCESS);
 }
 

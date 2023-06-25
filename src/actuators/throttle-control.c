@@ -11,7 +11,7 @@
 // MACROS
 // INPUT_MAX_LEN: lunghezza della stringa di input dalla central-ECU:
 // "INCREMENTO 5\n"
-#define INPUT_MAX_LEN 13
+#define INPUT_MAX_LEN 14
 // LOG_PHRASE_LEN: lunghezza della stringa di log:
 // "DD/MM/YYYY hh:mm:ss - AUMENTO 5\n"
 #define LOG_PHRASE_LEN 32
@@ -64,7 +64,6 @@ central-ECU */
         time_log_func(log_fd, LOG_PHRASE_LEN, THROTTLE);
     } else {
       perror("throttle: read");
-      printf("%d\n", errno);
       exit(EXIT_FAILURE);
     }
   }

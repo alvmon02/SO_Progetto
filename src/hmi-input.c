@@ -11,13 +11,16 @@
 #define OUTPUT_MAX_LEN 11
 
 unsigned short int acceptable_input ( char * );
-void throttle_failed_handler(int);
-
+void throttle_failed_handler( int );
+void input_error_handler ( int );
+void interrupt_handler( int );
 // La funzione main esegue le operazioni relative al componente
 // di input, noto come human-machine-interface_input, abbreviato hmi-input
 int main() {
 
 	signal(SIGUSR1, throttle_failed_handler);
+	signal(SIGUSR2, input_error_handler);
+	signal(SIGINT, interrupt_handler);
 
 	// Connessione del file descriptor del pipe per la comunicazione tra central
   // ECU e hmi-input. Il protocollo impone che il pipe sia creato
@@ -41,9 +44,9 @@ int main() {
 
 	printf("TERMINALE DI INPUT\n\n"
 				 "Inserire una delle seguenti parole e premere invio:\n"
-				 "INIZIO\n"
-				 "PARCHEGGIO\n"
-				 "ARRESTO\n");
+				 "- INIZIO\n"
+				 "- PARCHEGGIO\n"
+				 "- ARRESTO\n");
 
 	// Il ciclo successivo rappresenta il cuore del processo.
 	// Il processo si mette in attesa di una stringa da parte
@@ -57,20 +60,14 @@ int main() {
 			perror("hmi-input: scanf");
 			exit(EXIT_FAILURE);
 		}
-		getchar();
 		unsigned short int input_flag = acceptable_input(term_input);
-		printf("%d\n", input_flag);
 		if(input_flag < 4){
 			if(write(pipe_fd, &input_flag, sizeof(short int)) < 0){
 				perror("hmi-input: write");
 				exit(EXIT_FAILURE);
 			}
 		} else {
-			printf("Digitazione del comando errata, inserire una "
-						 "delle seguenti parole e premere invio:\n"
-						 "INIZIO\n"
-						 "PARCHEGGIO\n"
-						 "ARRESTO\n");
+				input_error_handler(0);
 		}
 	}
 }
@@ -94,6 +91,19 @@ unsigned short int acceptable_input (char * input){
 }
 
 void throttle_failed_handler (int sig){
-	write(STDOUT_FILENO, "\n", 1);
+	printf("\n");
 	exit(EXIT_SUCCESS);
 }
+
+void input_error_handler (int sig ){
+	printf("Digitazione del comando errata, inserire una "
+						 "delle seguenti parole e premere invio:\n"
+						 "- INIZIO\n"
+						 "- PARCHEGGIO\n"
+						 "- ARRESTO\n");
+}
+
+void interrupt_handler(int sig){
+	kill(getppid(), SIGINT);
+}
+

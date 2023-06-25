@@ -19,12 +19,11 @@
 // Questa viene eseguita da uno solo dei processi che si connettono alla pipe,
 // infatti esegue la funzione unlink, la funzione mkfifo e la open con flags specificati come parametro.
 int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
-	if(unlinkat(AT_FDCWD, pipe_pathname, 0) < 0)
-		// perror("service: unlinkat pipe");
+	unlink(pipe_pathname);
 	if(mkfifoat(AT_FDCWD, pipe_pathname, mode) < 0)
 		perror("service: mkfifoat pipe");
 	int pipe_fd;
-	while((pipe_fd = openat(AT_FDCWD, pipe_pathname, flags)) <0){
+	while((pipe_fd = openat(AT_FDCWD, pipe_pathname, flags)) < 0){
 		perror("service: openat pipe");
 		sleep(1);
 	}
@@ -32,9 +31,9 @@ int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 }
 
 // Funzione che converte una stringa binaria di bytes (unsigned char *)
-// in codifica esadecimale.
-void hex ( unsigned char* to_conv, size_t size, char* converted){
-	for (int i = 0; i < size; i++){
+// // in codifica esadecimale.
+void hex ( unsigned char* to_conv, size_t size_to_conv, char* converted){
+	for (int i = 0; i < size_to_conv; i++){
 		converted[2*i] = to_conv[i]/16 + 48;
 		converted[(2*i) + 1] = to_conv[i]%16 + 48;
 		if(converted[2*i] > 57)
@@ -47,7 +46,7 @@ void hex ( unsigned char* to_conv, size_t size, char* converted){
 // Funzione per l'esecuzione sequenziale di invio tramite pipe di un messaggio
 // e la scrittura dello stesso nel log file.
 void broad_log (int pipe_fd, int log_fd, char * message, size_t size){
-	if(write (pipe_fd, message, size) < 0  || write (log_fd,	message, size) < 0 ){
+	if(write (pipe_fd, message, size-1) < 0  || write (log_fd,	message, size-1) < 0 ){
 		perror("broad_log: write");
 	}
 }
@@ -82,7 +81,7 @@ void time_log_func (int log_fd, size_t size, short int proc ){
   // nel log file
 	char *log_phrase = malloc(size);
   if(log_phrase == NULL){
-    perror("malloc");
+    perror("time log: malloc");
     exit(EXIT_FAILURE);
   }
 
@@ -91,7 +90,7 @@ void time_log_func (int log_fd, size_t size, short int proc ){
    * momento attuale di esecuzione time(NULL)*/
 	time_t raw_time = time(NULL);
 	if(raw_time == (time_t) -1){
-		perror("time");
+		perror("time log: time");
 		exit(EXIT_FAILURE);
 	}
 
@@ -99,7 +98,7 @@ void time_log_func (int log_fd, size_t size, short int proc ){
   // e dell'orario
   struct tm *act_time = localtime(&raw_time);
 	if(act_time == NULL){
-		perror("localtime");
+		perror("time log: localtime");
 		exit(EXIT_FAILURE);
 	}
 
@@ -108,30 +107,30 @@ void time_log_func (int log_fd, size_t size, short int proc ){
 		if(sprintf(log_phrase, "%02d/%02d/%d %02d:%02d:%02d - AUMENTO 5\n",
 				act_time->tm_mday, act_time->tm_mon, act_time->tm_year + 1900,
 				act_time->tm_hour, act_time->tm_min, act_time->tm_sec) < 0){
-			perror("sprintf");
+			perror("time log: sprintf");
 			exit(EXIT_FAILURE);
 		}
 	} else if(proc == BRAKE) {
 		if(sprintf(log_phrase, "%02d/%02d/%d %02d:%02d:%02d - FRENO 5\n",
 				act_time->tm_mday, act_time->tm_mon, act_time->tm_year + 1900,
 				act_time->tm_hour, act_time->tm_min, act_time->tm_sec) < 0){
-			perror("sprintf");
+			perror("time log: sprintf");
 			exit(EXIT_FAILURE);
 		}
 	}
 	else{
-		perror("unknown proc type");
+		perror("time log: unknown proc type");
 		exit(EXIT_FAILURE);
 	}
 
   // Scrittura nel log file
 	if(write(log_fd, log_phrase, size) < 0){
-		perror("write");
+		perror("time log: write");
 		exit(EXIT_FAILURE);
 	}
   free(log_phrase);
 }
-pid_t make_process(char *program_name, int name_length, char *args) {
+pid_t make_process(char *program_name, int name_length,pid_t pgid, char *args) {
 	pid_t pid;
 	char *program_path = malloc(name_length + 6);
 	if(program_path == NULL)
@@ -142,6 +141,7 @@ pid_t make_process(char *program_name, int name_length, char *args) {
 	if(pid < 0)
 		perror("fork");
 	else if(pid == 0){
+		setpgid(0, pgid);
 		if(args != NULL)
 			execlp(program_path,program_name, args, NULL);
 		else

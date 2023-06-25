@@ -108,5 +108,6 @@ int main(int argc, char * argv[]){
 }
 
 void signal_stp_handler(int sig) {
-	fflush(fdopen(comm_fd, "w"));
+	FILE * comm_file = fdopen(comm_fd, "w");
+	fflush(comm_file);
 }

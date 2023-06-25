@@ -9,14 +9,14 @@
 
 // MACROS
 // INPUT_MAX_LEN: lunghezza della stringa di input dalla central-ECU: "FRENO 5\n"
-#define INPUT_MAX_LEN 8
+#define INPUT_MAX_LEN 9
 // LOG_PHRASE_LEN: lunghezza della stringa di log: "DD/MM/YYYY hh:mm:ss - FRENO 5\n"
 #define LOG_PHRASE_LEN 30
 
 // File descriptor del log file
 int log_fd;
 
-void emergency_arrest ( );
+void emergency_arrest ( int );
 
 //La funzione main esegue le operazioni relative al componente brake-by-wire.c
 int main ( ) {
@@ -62,7 +62,6 @@ int main ( ) {
 		nread = read (pipe_fd, increment, INPUT_MAX_LEN);
 		if(nread < 0){
 			perror("brake: read");
-			exit(EXIT_FAILURE);
 		}
 		if(nread > 0){
 			time_log_func( log_fd,  LOG_PHRASE_LEN, BRAKE);
@@ -75,10 +74,8 @@ int main ( ) {
  * nel log file della stringa "ARRESTO AUTO\n".
  * Questa costituisce il gestore (o handler) del segnale di pericolo
  * da parte della central-ECU. */
-void  emergency_arrest ( ){
+void  emergency_arrest ( int sig ){
 	if(write(log_fd, "ARRESTO AUTO\n", 13) < 0){
-		perror("write");
-		exit(EXIT_FAILURE);
+		perror("brake: emergency arrest: write");
 	}
-	exit(EXIT_SUCCESS);
 }
