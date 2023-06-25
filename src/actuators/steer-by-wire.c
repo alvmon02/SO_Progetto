@@ -90,7 +90,7 @@ void turn ( char * log_phrase, short int direction){
 	// Si esegue la scrittura della log_phrase in steer.log per 4 volte (una volta al secondo per 4 secondi)
 	for(int i = 0; i < TURN_SECONDS; i++){
 		if(write(log_fd, log_phrase, LOG_MAX_LEN) < 0){
-			perror("steer: write");
+			perror("steer: write turn");
 			exit(EXIT_FAILURE);
 		}
 		sleep(1);
@@ -100,7 +100,7 @@ void turn ( char * log_phrase, short int direction){
 // La funzione esegue la scrittura della frase "NO ACTION" in steer.log (fd = log_fd) per 1 volta e attende un secondo
 void no_action( ){
 	if(write (log_fd, "NO ACTION\n", 10) < 0){
-		perror("write");
+		perror("steer: write no_action");
 		exit(EXIT_FAILURE);
 	}
 	sleep(1);

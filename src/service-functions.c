@@ -46,7 +46,7 @@ void hex ( unsigned char* to_conv, size_t size_to_conv, char* converted){
 // Funzione per l'esecuzione sequenziale di invio tramite pipe di un messaggio
 // e la scrittura dello stesso nel log file.
 void broad_log (int pipe_fd, int log_fd, char * message, size_t size){
-	if(write (pipe_fd, message, size-1) < 0  || write (log_fd,	message, size-1) < 0 ){
+	if(write (pipe_fd, message, size) < 0  || write (log_fd, message, size) < 0 ){
 		perror("broad_log: write");
 	}
 }
@@ -63,7 +63,8 @@ void read_conv_broad(int input_fd, unsigned char * input_str, char * input_hex, 
 		exit(EXIT_FAILURE);
 	} else if( nread == BYTES_LEN ){
 			hex(input_str, BYTES_LEN, input_hex);
-			broad_log(comm_fd, log_fd, input_hex, (BYTES_LEN *2) + 1);
+			input_hex[BYTES_CONVERTED - 1] = '\n';
+			broad_log(comm_fd, log_fd, input_hex, BYTES_CONVERTED);
 	}
 	sleep(1);
 }
@@ -134,12 +135,12 @@ pid_t make_process(char *program_name, int name_length,pid_t pgid, char *args) {
 	pid_t pid;
 	char *program_path = malloc(name_length + 6);
 	if(program_path == NULL)
-		perror("malloc");
+		perror("make process: malloc");
 	strcpy(program_path,"./bin/");
 	program_path = strcat(program_path, program_name);
 	pid = fork();
 	if(pid < 0)
-		perror("fork");
+		perror("make process: fork");
 	else if(pid == 0){
 		setpgid(0, pgid);
 		if(args != NULL)
