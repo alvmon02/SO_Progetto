@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
 #include "../include/service-functions.h"
 
 #define OUTPUT_MAX_LEN 11
@@ -14,6 +15,12 @@ unsigned short int acceptable_input ( char * );
 void throttle_failed_handler( int );
 void input_error_handler ( int );
 void interrupt_handler( int );
+
+	char failed_input_phrase[118] = "Digitazione del comando errata, inserire una "
+						 "delle seguenti parole e premere invio:\n"
+						 "- INIZIO\n"
+						 "- PARCHEGGIO\n"
+						 "- ARRESTO\n";
 // La funzione main esegue le operazioni relative al componente
 // di input, noto come human-machine-interface_input, abbreviato hmi-input
 int main() {
@@ -39,7 +46,6 @@ int main() {
 	char * term_input;
 	if((term_input = malloc(OUTPUT_MAX_LEN)) == NULL){
 		perror("hmi-input: malloc");
-		exit(EXIT_FAILURE);
 	}
 
 	printf("TERMINALE DI INPUT\n\n"
@@ -56,18 +62,19 @@ int main() {
 	// altrimenti si mette in attesa di un nuovo comando.
 	// L'inserimento del comando e` stato reso case insensitive
 	while(true){
-		if((scanf("%s", term_input)) < 0){
-			perror("hmi-input: scanf");
+		if(fgets(term_input, OUTPUT_MAX_LEN, stdin) == NULL){
+			perror("hmi-input: fgets");
 			exit(EXIT_FAILURE);
 		}
+	printf("%s\n", term_input);
 		unsigned short int input_flag = acceptable_input(term_input);
+			printf("%u\n", input_flag);
+
 		if(input_flag < 4){
-			if(write(pipe_fd, &input_flag, sizeof(short int)) < 0){
+			if(write(pipe_fd, &input_flag, sizeof(short int)) < 0)
 				perror("hmi-input: write");
-				exit(EXIT_FAILURE);
-			}
 		} else {
-				input_error_handler(0);
+					write(STDOUT_FILENO, failed_input_phrase, 117);
 		}
 	}
 }
@@ -80,11 +87,11 @@ int main() {
 // favorisse una maggiore portabilità.
 unsigned short int acceptable_input (char * input){
 	char * upper = str_toupper(input);
-	if(strcmp(upper, "INIZIO") == 0)
+	if(strcmp(upper, "INIZIO\n") == 0)
 		return INIZIO;
-	else if (strcmp(upper, "ARRESTO") == 0)
+	else if (strcmp(upper, "ARRESTO\n") == 0)
 		return ARRESTO;
-	else if (strcmp(upper, "PARCHEGGIO") == 0)
+	else if (strcmp(upper, "PARCHEGGIO\n") == 0)
 		return PARCHEGGIO;
 	else
 		return 4;
@@ -96,12 +103,7 @@ void throttle_failed_handler (int sig){
 }
 
 void input_error_handler (int sig ){
-	char str[117] = "Digitazione del comando errata, inserire una "
-						 "delle seguenti parole e premere invio:\n"
-						 "- INIZIO\n"
-						 "- PARCHEGGIO\n"
-						 "- ARRESTO\n";
-	write(STDOUT_FILENO, str, 117);
+	write(STDOUT_FILENO, failed_input_phrase, 118);
 }
 
 void interrupt_handler(int sig){
