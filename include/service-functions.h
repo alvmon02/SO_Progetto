@@ -18,8 +18,7 @@
 	#define CAMERAS "CAMERAS"
 	#define ASSIST "ASSIST"
 	#define SURR_CAM_LEN 8
-	// #define PARK_TIME 30
-	#define PARK_TIME 5
+	#define PARK_TIME 30
 	#define CONTINUE 0
 	#define RELOAD 1
 	#define BYTES_LEN 8

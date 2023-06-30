@@ -53,7 +53,9 @@ bool acceptable_string(char *);
 struct pipe_process *hmi_process;
 
 int speed = 0;
+int log_fd;
 bool park_done_flag = false;
+
 
 int main(int argc, char **argv){
 	// apre un file di log per gli errori che sara' condiviso da tutti i processi figli
@@ -103,7 +105,6 @@ int main(int argc, char **argv){
 	int radar_pipe_fd = radar_init( modalita);
 	processes_groups.sensors_group = camera_process.pgid;
 
-	int log_fd;
 	if((log_fd = openat(AT_FDCWD, "log/ECU.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0)
 		perror("openat ECU.log");
 
@@ -117,8 +118,6 @@ int main(int argc, char **argv){
 	hmi_process[WRITE].pid = out_pid;
 	hmi_init(hmi_process, 2);
 	processes_groups.hmi_group = (hmi_process + READ)->pgid;
-
-	// (hmi_process + WRITE)->pgid = processes_groups.hmi_group;
 
 	char *camera_buf = malloc(HMI_COMMAND_LENGTH);
 	char *radar_buf = malloc(BYTES_CONVERTED);
@@ -153,13 +152,23 @@ int main(int argc, char **argv){
 
 	int requested_speed = speed;
 	int temp_v;
+	printf("PIPPO\n");
+	FILE *camera_stream;
+	if((camera_stream = fdopen(camera_process.pipe_fd, O_RDONLY)) == NULL){
+		perror("ECU: fdopen camera");
+	}
+			printf("PIPPO\n");
+
 	if(kill(camera_process.pid, SIGUSR1) < 0){
 		perror("ECU: kill camera");
 	}
+
 	while(travel_flag) {
 		read(radar_pipe_fd, radar_buf, BYTES_CONVERTED);
 		// legge dalla hmi esce arresta la macchina o esce dal ciclo del viaggio
 		// per frenare e poi eseguire la procedura di parcheggio
+			printf("PIPPO\n");
+
 		if(read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(short int)) > 0){
 			perror("ECU: command red");
 			if(hmi_command == PARCHEGGIO)
@@ -169,19 +178,20 @@ int main(int argc, char **argv){
 			else
 				kill(hmi_process[READ].pid, SIGUSR2);
 		}
+		perror("ECU: no hmi commands");
 		// legge da front-windshield-camera e esegue l'azione opportuna:
 		//	- esce dal ciclo per eseguire frenata e parcheggio;
 		//	- arresta la macchina in caso di pericolo;
 		//	- manda il comando della sterzata a steer-by-wire se deve girare;
 		//	- se riceve un numero imposta la velocita' desiderata dalla camera;
-		if(read(camera_process.pipe_fd, camera_buf, HMI_COMMAND_LENGTH) < 0)
-			perror("ECU: read camera");
+		if(fgets(camera_buf, HMI_COMMAND_LENGTH, camera_stream) == NULL)
+			perror("ECU: fgets camera");
 		if(!strcmp(camera_buf, "PARCHEGGIO\n"))
 			break;
 		else if(!strcmp(camera_buf, "PERICOLO\n"))
 			arrest(brake_process.pid);
 		else if(!(strcmp(camera_buf, "DESTRA\n") && strcmp(camera_buf, "SINISTRA\n"))){
-			send_command(steer_pipe_fd, log_fd, hmi_process[WRITE].pipe_fd, camera_buf, HMI_COMMAND_LENGTH);
+			send_command(steer_pipe_fd, log_fd, hmi_process[WRITE].pipe_fd, camera_buf, strlen(camera_buf));
 		}
 		else if((temp_v = atoi(camera_buf)) > 0)
 			requested_speed = temp_v;
@@ -275,7 +285,7 @@ int radar_init(char *modalita) {
 }
 
 void hmi_init(struct pipe_process *hmi_processes, int processes_number) {
-	(hmi_processes + READ)->pid = make_process("hmi-input", 10,getpid(), NULL);
+	(hmi_processes + READ)->pid = make_process("hmi-input", 10, getpid(), NULL);
 	(hmi_processes + WRITE)->pipe_fd = initialize_pipe("tmp/hmi-out.pipe", O_WRONLY, 0666);
 	(hmi_processes + READ)->pipe_fd  = initialize_pipe("tmp/hmi-in.pipe", O_RDONLY | O_NONBLOCK, 0666);
 	(hmi_processes + READ)->pgid = getpgid((hmi_processes + READ)->pid);
@@ -320,7 +330,7 @@ void parking_completed_handler(int sig){
 }
 
 void arrest(pid_t brake_process) {
-	write(hmi_process[WRITE].pipe_fd, "ARRESTO AUTO\n", sizeof("ARRESTO AUTO\n"));
+	broad_log(hmi_process[WRITE].pipe_fd, log_fd, "ARRESTO AUTO\n", sizeof("ARRESTO AUTO\n"));
 	kill(brake_process, SIGUSR1);
 	speed = 0;
 }

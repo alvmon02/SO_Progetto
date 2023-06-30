@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <signal.h>
+#include <string.h>
 #include "../../include/service-functions.h"
 
 // MACROS
@@ -54,17 +55,17 @@ int main ( ) {
     exit(EXIT_FAILURE);
   }
 
-  while(!start_flag){
-    perror("windshield: start_flag is false");
-    sleep(1);
-  }
-
   // Inizializzazione della stringa di input che rappresenta il messaggio da
   // trasmettere alla central-ECU da parte del processo.
   char *camera_input = malloc(INPUT_MAX_LEN);
   if(camera_input == NULL){
     perror("windshield: malloc");
     exit(EXIT_FAILURE);
+  }
+
+  while(!start_flag){
+    perror("windshield: start_flag is false");
+    sleep(1);
   }
 
   // Il ciclo successivo rappresenta il cuore del processo.
@@ -76,11 +77,11 @@ int main ( ) {
   // EOF (=0).
   FILE * input_file = fdopen(input_fd, "r");
   while (true) {
-   if(fgets(camera_input, INPUT_MAX_LEN, input_file)  == NULL){
-      perror("windshield: read");
+   if(fgets(camera_input, INPUT_MAX_LEN, input_file) == NULL){
+      perror("windshield: fgets");
       exit(EXIT_SUCCESS);
     } else {
-      broad_log(pipe_fd, log_fd, camera_input, INPUT_MAX_LEN);
+      broad_log(pipe_fd, log_fd, camera_input, strlen(camera_input));
       sleep(1);
     }
   }
