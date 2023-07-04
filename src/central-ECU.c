@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 
+#include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -152,12 +153,10 @@ int main(int argc, char **argv){
 
 	int requested_speed = speed;
 	int temp_v;
-	printf("PIPPO\n");
 	FILE *camera_stream;
-	if((camera_stream = fdopen(camera_process.pipe_fd, O_RDONLY)) == NULL){
+	if((camera_stream = fdopen(camera_process.pipe_fd, "r")) == NULL){
 		perror("ECU: fdopen camera");
 	}
-			printf("PIPPO\n");
 
 	if(kill(camera_process.pid, SIGUSR1) < 0){
 		perror("ECU: kill camera");
@@ -167,7 +166,6 @@ int main(int argc, char **argv){
 		read(radar_pipe_fd, radar_buf, BYTES_CONVERTED);
 		// legge dalla hmi esce arresta la macchina o esce dal ciclo del viaggio
 		// per frenare e poi eseguire la procedura di parcheggio
-			printf("PIPPO\n");
 
 		if(read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(short int)) > 0){
 			perror("ECU: command red");
@@ -200,6 +198,7 @@ int main(int argc, char **argv){
 		// a throttle o brake per avvicinare di 5 la velocita' attuale a quella desiderata
 		if(speed != requested_speed)
 			change_speed(requested_speed, throttle_pipe_fd, brake_process.pipe_fd, log_fd, hmi_process[WRITE].pipe_fd);
+		sleep(1);
 	}
 
 	// frena per azzerare la velocita' e cosi' poter avviare la procedura di parcheggio

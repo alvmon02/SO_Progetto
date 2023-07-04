@@ -101,6 +101,9 @@ int main(int argc, char * argv[]){
 	// Il ciclo e` un ciclo infinito, nel caso caso si utilizzi il processo
 	// per ASSIST occorrerà inviare un segnale di interruzione dopo 30
 	// secondi per interrompere la lettura e l'invio dei dati.
+
+	// DA CORREGGERE PERCHE' INIZIA SUBITO A LEGGERE E SCRIVERE ROBA NEL FILE DI LOG!
+	// La cosa piu' semplice mi pare flag con signal
 	while (true) {
 		read_conv_broad(input_fd, input_str, input_hex, comm_fd, log_fd);
   }

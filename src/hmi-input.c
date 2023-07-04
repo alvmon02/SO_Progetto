@@ -9,7 +9,7 @@
 #include <errno.h>
 #include "../include/service-functions.h"
 
-#define OUTPUT_MAX_LEN 11
+#define OUTPUT_MAX_LEN 12
 
 unsigned short int acceptable_input ( char * );
 void throttle_failed_handler( int );
@@ -35,10 +35,15 @@ int main() {
   // aperto in sola scrittura dal processo hmi-input il quale vi
   // scriva non appena riceva da tastiera attraverso il terminale di input.
 	int pipe_fd;
-	while((pipe_fd = openat(AT_FDCWD, "tmp/hmi-in.pipe", O_WRONLY | O_NONBLOCK)) < 0){
+	errno = 0;
+	// QUESTO CICLO DI MERDA MI DA' ERRORE INVALID ARGUMENT. PERCHE'?????
+	while((pipe_fd = openat(AT_FDCWD, "tmp/hmi-in.pipe", O_WRONLY | O_CREAT | O_NONBLOCK)) < 0){
+		printf("%u\n", pipe_fd);
 		perror("hmi-input: openat pipe");
 		sleep(1);
 	}
+	errno = 0;
+	perror("hmi-input: per sport");
 	perror("hmi-input: CONNECTED");
 	// Inizializzazione della stringa di input che rappresenta il comando
 	// inserito nel terminale da parte dell'esecutore del programma.
@@ -61,20 +66,23 @@ int main() {
 	// in caso di compatibilita, lo trasmette alla central-ECU,
 	// altrimenti si mette in attesa di un nuovo comando.
 	// L'inserimento del comando e` stato reso case insensitive
+	bool start_flag = false;
 	while(true){
 		if(fgets(term_input, OUTPUT_MAX_LEN, stdin) == NULL){
 			perror("hmi-input: fgets");
-			exit(EXIT_FAILURE);
+			sleep(1);
+			// exit(EXIT_FAILURE);
 		}
-	printf("%s\n", term_input);
+		// printf("%s\n", term_input);
 		unsigned short int input_flag = acceptable_input(term_input);
-			printf("%u\n", input_flag);
+		// printf("%u\n", input_flag);
 
 		if(input_flag < 4){
 			if(write(pipe_fd, &input_flag, sizeof(short int)) < 0)
 				perror("hmi-input: write");
-		} else {
-					write(STDOUT_FILENO, failed_input_phrase, 117);
+			start_flag = true;
+		} else if(!start_flag) {
+			write(STDOUT_FILENO, failed_input_phrase, 117);
 		}
 	}
 }

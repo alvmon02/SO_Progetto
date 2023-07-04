@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <signal.h>
 #include <string.h>
+#include <errno.h>
 #include "../../include/service-functions.h"
 
 // MACROS
@@ -38,6 +39,7 @@ int main ( ) {
     perror("windshield: openat pipe");
     sleep(1);
   }
+  perror("windshield: per sport");
   perror("windshield: CONNECTED");
   // Connessione del file descriptor del log file. Apertura in sola scrittura.
   // Qualora il file non esista viene creato. Qualora il file sia presente
