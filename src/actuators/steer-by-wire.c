@@ -10,11 +10,11 @@
 
 // MACROS
 // INPUT_MAX_LEN: lunghezza massima della stringa di input dalla central-ECU: "SINISTRA\n"
-#define INPUT_MAX_LEN 9
+#define INPUT_MAX_LEN 10
 // TURN_SECONDS: numero di secondi nei quali l'attuatore dovra` eseguire la svolta non considerando gli input
 #define TURN_SECONDS 4
 // LOG_MAX_LEN: lunghezza massima della stringa da inserire nel log file, compresa del carattere '\n': "STO GIRANDO A SINISTRA\n" (DESTRA risulta piu` corta di un carattere)
-#define LOG_MAX_LEN 23
+#define LOG_MAX_LEN 24
 // LOG_COMM_LEN: lunghezza della parte comune della stringa da inserire nel log file nei due casi di svolta a sinistra e di svolta a destra
 #define LOG_COMM_LEN 14
 
@@ -51,7 +51,7 @@ int main(){
 	int nread;
 
 	/* Il ciclo infinito successivo rappresenta il cuore del processo.
-	 * Ad ogni lettura del del pipe potra` accadere che il pipe in scrittura non sia ancora stato aperto (nread = -1),
+	 * Ad ogni lettura del pipe potra` accadere che il pipe in scrittura non sia ancora stato aperto (nread = -1),
 	 * che il pipe sia aperto ma che non vi sia stato scritto niente (nread = 0),
 	 * che nel pipe sia stato inserita la stringa "DESTRA\n" (nread = 7) o, infine,
 	 * che sia stata inserita la stringa "SINISTRA\n" (nread = 8).
@@ -61,14 +61,16 @@ int main(){
 	 * Gli input ricevuti nel mezzo di questi intervalli saranno ignorati. */
 	while(true){
 		nread = read(pipe_fd, action, sizeof(action));
+		if(nread != -1)
+			printf("%d\n", nread);
 		switch(nread){
 
 			case 7:
 				turn(log_phrase, RIGHT);
-				perror("steer: red left");
+				perror("steer: red right");
 				break;
 
-			case 8:
+			case 9:
 				turn(log_phrase, LEFT);
 				perror("steer: red left");
 				break;
