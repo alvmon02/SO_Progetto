@@ -19,37 +19,37 @@ exec: sensors actuators hmi ADAS-simulator
 
 #Compilazione del file con il Main principale
 ADAS-simulator: service-functions.o
-	cc -o $(EXECUTABLE)ADAS-simulator \
+	cc -g -o $(EXECUTABLE)ADAS-simulator \
 	$(EXECUTABLE)service-functions.o $(SRC_DIR)central-ECU.c
 
 #Compilazione dei eseguibili relativi ai sensori
 sensors: park-assist windshield-camera bytes-sensors
 
 park-assist:service-functions.o
-	cc -o $(EXECUTABLE)park-assist \
+	cc -g -o $(EXECUTABLE)park-assist \
 	$(EXECUTABLE)service-functions.o $(SRC_SEN_DIR)park-assist.c
 
 windshield-camera: service-functions.o
-	cc -o $(EXECUTABLE)windshield-camera \
+	cc -g -o $(EXECUTABLE)windshield-camera \
 	$(EXECUTABLE)service-functions.o $(SRC_SEN_DIR)windshield-camera.c
 
 bytes-sensors: service-functions.o
-	cc -o $(EXECUTABLE)bytes-sensors \
+	cc -g -o $(EXECUTABLE)bytes-sensors \
 	$(EXECUTABLE)service-functions.o $(SRC_SEN_DIR)bytes-sensors.c
 
 #Compilazione dei eseguibili relativi agli attuatori
 actuators: brake-by-wire steer-by-wire throttle-control
 
 brake-by-wire: service-functions.o
-	cc -o $(EXECUTABLE)brake-by-wire \
+	cc -g -o $(EXECUTABLE)brake-by-wire \
 	$(EXECUTABLE)service-functions.o $(SRC_ACT_DIR)brake-by-wire.c
 
 steer-by-wire: $(EXECUTABLE)service-functions.o
-	cc -o $(EXECUTABLE)steer-by-wire \
+	cc -g -o $(EXECUTABLE)steer-by-wire \
 	$(EXECUTABLE)service-functions.o $(SRC_ACT_DIR)steer-by-wire.c
 
 throttle-control: $(EXECUTABLE)service-functions.o
-	cc -o $(EXECUTABLE)throttle-control \
+	cc -g -o $(EXECUTABLE)throttle-control \
 	$(EXECUTABLE)service-functions.o $(SRC_ACT_DIR)throttle-control.c
 
 
@@ -59,17 +59,17 @@ throttle-control: $(EXECUTABLE)service-functions.o
 hmi: hmi-output hmi-input
 
 hmi-output: service-functions.o
-	cc -o $(EXECUTABLE)hmi-output \
+	cc -g -o $(EXECUTABLE)hmi-output \
 	$(EXECUTABLE)service-functions.o $(SRC_DIR)hmi-output.c
 
 hmi-input: service-functions.o
-	cc -o $(EXECUTABLE)hmi-input \
+	cc -g -o $(EXECUTABLE)hmi-input \
 	$(EXECUTABLE)service-functions.o $(SRC_DIR)hmi-input.c
 
 
 #	Pre-Compilazione delle funzioni di servizio
 service-functions.o: $(HEADERS)service-functions.h $(SRC_DIR)service-functions.c
-	cc -c -o$(EXECUTABLE)service-functions.o $(SRC_DIR)service-functions.c
+	cc -c -g -o$(EXECUTABLE)service-functions.o $(SRC_DIR)service-functions.c
 
 
 install:
@@ -81,7 +81,7 @@ clean:
 	rm -rf bin
 	rm -rf tmp
 	rm -rf log
-	rm ADAS-simulator
+	rm -f ADAS-simulator
 
 uninstall:
 	rm -Rv $(CURDIR)
