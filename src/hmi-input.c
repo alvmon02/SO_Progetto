@@ -16,7 +16,7 @@ void throttle_failed_handler( int );
 void input_error_handler ( int );
 void interrupt_handler( int );
 
-	char failed_input_phrase[118] = "Digitazione del comando errata, inserire una "
+char failed_input_phrase[118] = "Digitazione del comando errata, inserire una "
 						 "delle seguenti parole e premere invio:\n"
 						 "- INIZIO\n"
 						 "- PARCHEGGIO\n"
@@ -30,15 +30,15 @@ int main() {
 	signal(SIGINT, interrupt_handler);
 
 	// Connessione del file descriptor del pipe per la comunicazione tra central
-  // ECU e hmi-input. Il protocollo impone che il pipe sia creato
-  // durante la fase di inizializzazione del processo central-ECU e che venga
-  // aperto in sola scrittura dal processo hmi-input il quale vi
-  // scriva non appena riceva da tastiera attraverso il terminale di input.
+  	// ECU e hmi-input. Il protocollo impone che il pipe sia creato
+  	// durante la fase di inizializzazione del processo central-ECU e che venga
+  	// aperto in sola scrittura dal processo hmi-input il quale vi
+  	// scriva non appena riceva da tastiera attraverso il terminale di input.
 	int pipe_fd;
 	errno = 0;
 	// QUESTO CICLO DI MERDA MI DA' ERRORE INVALID ARGUMENT. PERCHE'?????
 	while((pipe_fd = openat(AT_FDCWD, "tmp/hmi-in.pipe", O_WRONLY | O_CREAT | O_NONBLOCK)) < 0){
-		printf("%u\n", pipe_fd);
+		// printf("%u\n", pipe_fd); DA ELIMINARE DOPO COMPLETAMENTO DEBUG
 		perror("hmi-input: openat pipe");
 		sleep(1);
 	}

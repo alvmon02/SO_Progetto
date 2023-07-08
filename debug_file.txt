@@ -1,0 +1,6 @@
+TERMINALE DI INPUT
+
+Inserire una delle seguenti parole e premere invio:
+- INIZIO
+- PARCHEGGIO
+- ARRESTO

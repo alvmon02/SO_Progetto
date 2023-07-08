@@ -81,16 +81,16 @@ int main(int argc, char * argv[]){
 	}
 	perror("bytes-sensors: CONNECTED");
 	// Inizializzazione della stringa di input che rappresenta l'insieme di byte
-  // da trasmettere alla central-ECU da parte del processo.
-  // La stringa di unsigned char viene tradotta in una stringa di char lunga
+  	// da trasmettere alla central-ECU da parte del processo.
+  	// La stringa di unsigned char viene tradotta in una stringa di char lunga
 	// il doppio più il carattere di terminazione.
-  // Ad ogni byte della stringa decodificata corrisponde il carattere ASCII
-  // che decodifica la meta` del corrispondente byte della stringa codificata.
-  // Quindi per ogni byte della stringa codificata occorreranno 2 byte della
-  // stringa decodificata per immagazzinare i caratteri ASCII appropriati.
-  // Il +1 nella stringa decodificata  e` necessario per inserirvi il carattere
+  	// Ad ogni byte della stringa decodificata corrisponde il carattere ASCII
+  	// che decodifica la meta` del corrispondente byte della stringa codificata.
+  	// Quindi per ogni byte della stringa codificata occorreranno 2 byte della
+  	// stringa decodificata per immagazzinare i caratteri ASCII appropriati.
+  	// Il +1 nella stringa decodificata  e` necessario per inserirvi il carattere
 	// di terminazione riga '\n'.
-  unsigned char input_str[BYTES_LEN];
+  	unsigned char input_str[BYTES_LEN];
 	char input_hex[BYTES_CONVERTED];
 
 	// Il ciclo successivo e` il cuore del processo.

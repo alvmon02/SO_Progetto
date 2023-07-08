@@ -28,18 +28,19 @@ bool start_flag = false;
 
 //La funzione main esegue le operazioni relative al componente windshield-camera
 int main ( ) {
+  errno = 0;
   signal(SIGUSR1, start_handler);
-
+  perror("windshield: signal eseguita");
   // Connessione del file descriptor del pipe per la comunicazione tra central
   // ECU e windshield-camera. Il protocollo impone che il pipe sia creato
   // durante la fase di inizializzazione del processo central-ECU e che venga
   // aperto in sola scrittura dal processo windshield-camera il quale vi scriva
   // una volta al secondo.
+  errno = 0;
   while((pipe_fd = openat(AT_FDCWD, "tmp/camera.pipe", O_WRONLY)) < 0){
     perror("windshield: openat pipe");
     sleep(1);
   }
-  perror("windshield: per sport");
   perror("windshield: CONNECTED");
   // Connessione del file descriptor del log file. Apertura in sola scrittura.
   // Qualora il file non esista viene creato. Qualora il file sia presente
@@ -91,5 +92,6 @@ int main ( ) {
 
 void start_handler(int sig){
   start_flag = true;
+  errno = 0;
   perror("windshield: handler: start_flag is true");
 }

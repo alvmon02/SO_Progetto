@@ -81,6 +81,7 @@ int main(int argc, char **argv){
 		modalita = argv[1];
 
 	// se c'e' imposta il terminale scelto dall'utente
+	// SPOILER: almeno per ora non funziona
 	pid_t out_pid;
 	if(argc == 4 && !(strcmp(argv[2], "--term"))) {
 		if(!(out_pid = fork()))
@@ -119,7 +120,6 @@ int main(int argc, char **argv){
 	hmi_process[WRITE].pid = out_pid;
 	hmi_init(hmi_process, 2);
 	processes_groups.hmi_group = (hmi_process + READ)->pgid;
-
 	char *camera_buf = malloc(HMI_COMMAND_LENGTH);
 	char *radar_buf = malloc(BYTES_CONVERTED);
 
@@ -136,7 +136,7 @@ int main(int argc, char **argv){
 	// ciclo d'attesa prima dell'inizio del viaggio
 	while (flag_arrest){
 		sleep(1);
-		if(read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(short int)) > 0)
+		if(read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(unsigned short int)) > 0)
 			perror("ECU: command red");
 		switch(hmi_command){
 			case PARCHEGGIO:
@@ -146,7 +146,7 @@ int main(int argc, char **argv){
 				break;
 			case ARRESTO:
 				if(kill(hmi_process[READ].pid,SIGUSR2) <0)
-					perror("ECU: kill:");
+					perror("ECU: kill");
 			default: break;
 		}
 	}
@@ -184,7 +184,7 @@ int main(int argc, char **argv){
 		//	- se riceve un numero imposta la velocita' desiderata dalla camera;
 		if(fgets(camera_buf, HMI_COMMAND_LENGTH, camera_stream) == NULL)
 			perror("ECU: fgets camera");
-		if(!strcmp(camera_buf, "PARCHEGGIO\n"))
+		if(!strcmp(camera_buf, "PARCHEGGIO"))
 			break;
 		else if(!strcmp(camera_buf, "PERICOLO\n"))
 			arrest(brake_process.pid);
@@ -217,7 +217,6 @@ int main(int argc, char **argv){
 	processes_groups.park_assist_group = park_process.pgid;
 
   	while (!parking_completed) {
-		sleep(1);
 		broad_log(hmi_process[WRITE].pipe_fd, log_fd, "INIZIO PROCEDURA PARCHEGGIO\n", sizeof("INIZIO PROCEDURA PARCHEGGIO\n"));
     	if(kill(park_process.pid, SIGUSR1) < 0)
 			perror("ECU: park start signal");
@@ -227,6 +226,7 @@ int main(int argc, char **argv){
 			perror("ECU: read park");
     		if(!acceptable_string(park_data))
         		break;
+			sleep(1);
     	}
 
     	if(park_done_flag && nread <= 0){
