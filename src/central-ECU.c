@@ -67,8 +67,8 @@ int main(int argc, char **argv){
 
 	// controlla che gli argomenti da linea di comando siano 2 o 4 per accettare la modalita'
 	// d'esecuzione e nel caso il terminale da usare per la hmi
-	if(argc < 2 || argc > 4 || argc == 3) {
-		perror(" syntax error");
+	if(argc < 2 || argc == 3 || argc > 4 ) {
+		perror("EUC: syntax error");
 		exit(EXIT_FAILURE);
 	}
 
@@ -79,17 +79,6 @@ int main(int argc, char **argv){
 		exit(EXIT_FAILURE);
 	} else
 		modalita = argv[1];
-
-	// se c'e' imposta il terminale scelto dall'utente
-	// SPOILER: almeno per ora non funziona
-	pid_t out_pid;
-	if(argc == 4 && !(strcmp(argv[2], "--term"))) {
-		if(!(out_pid = fork()))
-			execlp("./sh/new_terminal.sh", "./sh/new_terminal.sh", argv[3], NULL);
-	} else {
-		if(!(out_pid = fork()))
-			execlp("./sh/new_terminal.sh","./sh/new_terminal.sh" , NULL);
-	}
 
 	// FASE INIZIALIZZAZIONE SISTEMA
 
@@ -112,12 +101,22 @@ int main(int argc, char **argv){
 
 	// attivo il signal handler per l'errore nell'accelerazione e la conclusione
 	// di parcheggio
+
 	signal(SIGUSR1, ECU_signal_handler);
 	signal(SIGUSR2, parking_completed_handler);
 	signal(SIGINT, ECU_signal_handler);
+	signal(SIGCHLD, SIG_IGN);
 
+	// se c'e' imposta il terminale scelto dall'utente
+	// SPOILER: almeno per ora non funziona
 	hmi_process = malloc(2*sizeof(struct pipe_process));
-	hmi_process[WRITE].pid = out_pid;
+	if(argc == 4 && !(strcmp(argv[2], "--term"))) {
+		if(!(hmi_process[WRITE].pid = fork()))
+			execlp("./sh/new_terminal.sh", "./sh/new_terminal.sh", argv[3], NULL);
+	} else {
+		if(!(hmi_process[WRITE].pid = fork()))
+			execlp("./sh/new_terminal.sh","./sh/new_terminal.sh" , NULL);
+	}
 	hmi_init(hmi_process, 2);
 	processes_groups.hmi_group = (hmi_process + READ)->pgid;
 	char *camera_buf = malloc(HMI_COMMAND_LENGTH);
@@ -132,10 +131,12 @@ int main(int argc, char **argv){
 	// immediata senza iniziare il viaggio
 	bool travel_flag = true;
 	bool flag_arrest = true;
-	unsigned short int hmi_command = (unsigned short int) -1;
+	unsigned short int hmi_command;
 	// ciclo d'attesa prima dell'inizio del viaggio
 	while (flag_arrest){
 		sleep(1);
+		hmi_command = -1;
+		// printf("Reading\n");
 		if(read(hmi_process[READ].pipe_fd, &hmi_command, sizeof(unsigned short int)) > 0)
 			perror("ECU: command red");
 		switch(hmi_command){
@@ -184,7 +185,7 @@ int main(int argc, char **argv){
 		//	- se riceve un numero imposta la velocita' desiderata dalla camera;
 		if(fgets(camera_buf, HMI_COMMAND_LENGTH, camera_stream) == NULL)
 			perror("ECU: fgets camera");
-		if(!strcmp(camera_buf, "PARCHEGGIO"))
+		if(!strcmp(camera_buf, "PARCHEGGIO\n"))
 			break;
 		else if(!strcmp(camera_buf, "PERICOLO\n"))
 			arrest(brake_process.pid);
@@ -225,7 +226,7 @@ int main(int argc, char **argv){
 			nread = read(park_process.pipe_fd, park_data, BYTES_CONVERTED);
 			perror("ECU: read park");
     		if(!acceptable_string(park_data))
-        		break;
+					break;
 			sleep(1);
     	}
 
