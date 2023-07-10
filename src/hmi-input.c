@@ -16,6 +16,8 @@ void throttle_failed_handler( int );
 void input_error_handler ( int );
 void interrupt_handler( int );
 
+bool started_flag = false;
+bool interrupted_flag = false;
 char failed_input_phrase[118] = "Digitazione del comando errata, inserire una "
 						 "delle seguenti parole e premere invio:\n"
 						 "- INIZIO\n"
@@ -25,8 +27,11 @@ char failed_input_phrase[118] = "Digitazione del comando errata, inserire una "
 // di input, noto come human-machine-interface_input, abbreviato hmi-input
 int main() {
 
+	struct sigaction act = { 0 };
+	act.sa_flags = SA_RESTART;
+	act.sa_handler = &input_error_handler;
+	sigaction(SIGUSR2, &act, NULL);
 	signal(SIGUSR1, throttle_failed_handler);
-	signal(SIGUSR2, input_error_handler);
 	signal(SIGINT, interrupt_handler);
 
 	// Connessione del file descriptor del pipe per la comunicazione tra central
@@ -66,23 +71,22 @@ int main() {
 	// in caso di compatibilita, lo trasmette alla central-ECU,
 	// altrimenti si mette in attesa di un nuovo comando.
 	// L'inserimento del comando e` stato reso case insensitive
-	bool start_flag = false;
 	while(true){
 		if(fgets(term_input, OUTPUT_MAX_LEN, stdin) == NULL){
 			perror("hmi-input: fgets");
-			sleep(1);
-			// exit(EXIT_FAILURE);
+			continue;
 		}
-		// printf("%s\n", term_input);
+
 		unsigned short int input_flag = acceptable_input(term_input);
-		// printf("%u\n", input_flag);
 
 		if(input_flag < 4){
-			if(write(pipe_fd, &input_flag, sizeof(short int)) < 0)
+			if(write(pipe_fd, &input_flag, sizeof(unsigned short int)) < 0)
 				perror("hmi-input: write");
-			start_flag = true;
-		} else if(!start_flag) {
-			write(STDOUT_FILENO, failed_input_phrase, 117);
+			else
+				perror("hmi-input: written");
+			started_flag = true;
+		} else if(!started_flag){
+			write(STDOUT_FILENO, failed_input_phrase, 118);
 		}
 	}
 }
@@ -106,12 +110,16 @@ unsigned short int acceptable_input (char * input){
 }
 
 void throttle_failed_handler (int sig){
-	printf("\n");
+	write(STDOUT_FILENO, "\n", 1);
 	exit(EXIT_SUCCESS);
 }
 
 void input_error_handler (int sig ){
-	write(STDOUT_FILENO, failed_input_phrase, 118);
+	if(started_flag)
+		write(STDOUT_FILENO, "Veicolo gia` in movimento. Le azioni possibili sono:\n"
+		"- ARRESTO\n- PARCHEGGIO\n", 76);
+	else
+		write(STDOUT_FILENO, failed_input_phrase, 118);
 }
 
 void interrupt_handler(int sig){
