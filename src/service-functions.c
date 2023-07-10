@@ -27,6 +27,7 @@ int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 		perror("service: openat pipe");
 		sleep(1);
 	}
+	printf("Pipe %s inizialized\n", pipe_pathname);
 	return pipe_fd;
 }
 
@@ -131,7 +132,7 @@ void time_log_func (int log_fd, size_t size, short int proc ){
 	}
   free(log_phrase);
 }
-pid_t make_process(char *program_name, int name_length,pid_t pgid, char *args) {
+pid_t make_process(char *program_name, int name_length, pid_t pgid, char *args) {
 	pid_t pid;
 	char *program_path = malloc(name_length + 6);
 	if(program_path == NULL)
