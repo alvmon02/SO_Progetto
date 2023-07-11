@@ -11,6 +11,7 @@
 
 void throttle_failed_handler ( int );
 void park_handler (int );
+int read_line(char *, int, int);
 
 // La funzione main esegue le operazioni relative al componente
 // di output, noto come human-machine-interface_output, abbreviato hmi-output
@@ -44,7 +45,7 @@ int main() {
 	// della central-ECU e appena lo riceve questo viene immediatamente stampato
 	// sul terminale da parte del processo.
 	while(true)
-		if((nread = read(pipe_fd, ECU_input, INPUT_MAX_LEN)) > 0 )
+		if(read_line(ECU_input, INPUT_MAX_LEN, pipe_fd) == 0)
 			printf("%s", ECU_input);
 }
 
@@ -60,3 +61,15 @@ void park_handler( int sig ) {
 	exit(EXIT_SUCCESS);
 }
 
+
+int read_line(char *string, int string_length, int pipe_fd) {
+	int i = 0;
+	if(read(pipe_fd, string, string_length) > 0 ) {
+		for(i = 0; string[i-1] != '\0' || i < string_length; i++) {
+			if(string[i-1] == '\n')
+				string[i] = '\0';
+		}
+		return 0;
+	}
+	return -1;
+}
