@@ -57,7 +57,6 @@ int speed = 0;
 int log_fd;
 bool park_done_flag = false;
 
-
 int main(int argc, char **argv){
 	// apre un file di log per gli errori che sara' condiviso da tutti i processi figli
 	umask(0000);
@@ -234,7 +233,7 @@ int main(int argc, char **argv){
 			parking_completed = true;
 			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO COMPLETATA\n", sizeof("PROCEDURA PARCHEGGIO COMPLETATA\n"));
 		} else {
-			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO INCLOMPLETA\n", sizeof("PROCEDURA PARCHEGGIO INCOMPLETA\n"));
+			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO INCOMPLETA\n", sizeof("PROCEDURA PARCHEGGIO INCOMPLETA\n"));
     		kill(park_process.pid, SIGUSR2);
 		}
 	}
@@ -286,8 +285,8 @@ int radar_init(char *modalita) {
 
 void hmi_init(struct pipe_process *hmi_processes, int processes_number) {
 	(hmi_processes + READ)->pid = make_process("hmi-input", 10, getpid(), NULL);
-	(hmi_processes + WRITE)->pipe_fd = initialize_pipe("tmp/hmi-out.pipe", O_WRONLY, 0666);
 	(hmi_processes + READ)->pipe_fd  = initialize_pipe("tmp/hmi-in.pipe", O_RDONLY | O_NONBLOCK, 0666);
+	(hmi_processes + WRITE)->pipe_fd = initialize_pipe("tmp/hmi-out.pipe", O_WRONLY, 0666);
 	(hmi_processes + READ)->pgid = getpgid((hmi_processes + READ)->pid);
 	(hmi_processes + WRITE)->pgid = getpgid((hmi_processes + READ)->pid);
 	return;
