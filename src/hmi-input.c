@@ -16,7 +16,6 @@ void throttle_failed_handler( int );
 void input_error_handler ( int );
 void interrupt_handler( int );
 
-bool started_flag = false;
 bool interrupted_flag = false;
 char failed_input_phrase[118] = "Digitazione del comando errata, inserire una "
 						 "delle seguenti parole e premere invio:\n"
@@ -40,10 +39,7 @@ int main() {
   	// aperto in sola scrittura dal processo hmi-input il quale vi
   	// scriva non appena riceva da tastiera attraverso il terminale di input.
 	int pipe_fd;
-	errno = 0;
-	// QUESTO CICLO DI MERDA MI DA' ERRORE INVALID ARGUMENT. PERCHE'?????
 	while((pipe_fd = openat(AT_FDCWD, "tmp/hmi-in.pipe", O_WRONLY | O_CREAT | O_NONBLOCK)) < 0){
-		// printf("%u\n", pipe_fd); DA ELIMINARE DOPO COMPLETAMENTO DEBUG
 		perror("hmi-input: openat pipe");
 		sleep(1);
 	}
@@ -78,16 +74,11 @@ int main() {
 		}
 
 		unsigned short int input_flag = acceptable_input(term_input);
-
-		if(input_flag < 4){
+		if(input_flag < 4) {
 			if(write(pipe_fd, &input_flag, sizeof(unsigned short int)) < 0)
 				perror("hmi-input: write");
-			else
-				perror("hmi-input: written");
-			started_flag = true;
-		} else if(!started_flag){
+		} else
 			write(STDOUT_FILENO, failed_input_phrase, 118);
-		}
 	}
 }
 
@@ -115,10 +106,6 @@ void throttle_failed_handler (int sig){
 }
 
 void input_error_handler (int sig ){
-	if(started_flag)
-		write(STDOUT_FILENO, "Veicolo gia` in movimento. Le azioni possibili sono:\n"
-		"- ARRESTO\n- PARCHEGGIO\n", 76);
-	else
 		write(STDOUT_FILENO, failed_input_phrase, 118);
 }
 

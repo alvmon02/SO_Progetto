@@ -24,6 +24,9 @@ bool restart_flag;
 
 int main(int argc, char *argv[]){
 
+	signal(SIGUSR1,signal_start_handler);
+	signal(SIGUSR2, restart_handler);
+
 	if (argc != 2){
 		perror("park-assist: syntax error");
 		exit(EXIT_FAILURE);
@@ -57,9 +60,6 @@ int main(int argc, char *argv[]){
 
 		//Connessione alla ECU
 	assist_fd = pipe_open();
-
-	signal(SIGUSR1,signal_start_handler);
-	signal(SIGUSR2, restart_handler);
 
 	while(!start_flag)
 		sleep(1);
