@@ -61,8 +61,6 @@ int main(){
 	 * Gli input ricevuti nel mezzo di questi intervalli saranno ignorati. */
 	while(true){
 		nread = read(pipe_fd, action, sizeof(action));
-		if(nread != -1)
-			printf("%d\n", nread);
 		switch(nread){
 
 			case 7:
