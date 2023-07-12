@@ -167,10 +167,6 @@ int main(int argc, char **argv){
 		read(radar_pipe_fd, radar_buf, BYTES_CONVERTED);
 
 
-		// aggiorna la velocita' della macchina mandando un comando INCREMENTO 5 o INCREMENTO 5
-		// a throttle o brake per avvicinare di 5 la velocita' attuale a quella desiderata
-		if(speed != requested_speed)
-			change_speed(requested_speed, throttle_pipe_fd, brake_process.pipe_fd, log_fd, hmi_process[WRITE].pipe_fd);
 
 		// legge dalla hmi esce arresta la macchina o esce dal ciclo del viaggio
 		// per frenare e poi eseguire la procedura di parcheggio
@@ -201,7 +197,16 @@ int main(int argc, char **argv){
 		else if((temp_v = atoi(camera_buf)) > 0)
 			requested_speed = temp_v;
 		sleep(1);
+
+		// aggiorna la velocita' della macchina mandando un comando INCREMENTO 5 o INCREMENTO 5
+		// a throttle o brake per avvicinare di 5 la velocita' attuale a quella desiderata
+		if(speed != requested_speed)
+			change_speed(requested_speed, throttle_pipe_fd, brake_process.pipe_fd, log_fd, hmi_process[WRITE].pipe_fd);
 	}
+
+
+
+
 
 	// frena per azzerare la velocita' e cosi' poter avviare la procedura di parcheggio
 	while(speed > 0) {
