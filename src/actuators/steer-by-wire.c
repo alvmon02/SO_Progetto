@@ -32,13 +32,13 @@ int main(){
 	 * venga aperto in sola lettura dal processo steer-by-wire il quale vi legga al bisogno. */
 	int pipe_fd;
 	if((pipe_fd = openat (AT_FDCWD, "tmp/steer.pipe", O_RDONLY | O_NONBLOCK)) < 0){
-		perror("openat steer pipe");
+		perror("steer: openat pipe");
 		exit(EXIT_FAILURE);
 	}
 
 	// Creazione e apertura del log file e associazione del file descriptor
 	if((log_fd = openat (AT_FDCWD, "log/steer.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
-		perror("openat steer log");
+		perror("steer: openat log");
 		exit(EXIT_FAILURE);
 	}
 
@@ -62,7 +62,6 @@ int main(){
 	while(true){
 		nread = read(pipe_fd, action, sizeof(action));
 		switch(nread){
-
 			case 7:
 				turn(log_phrase, RIGHT);
 				perror("steer: red right");

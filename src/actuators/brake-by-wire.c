@@ -9,9 +9,9 @@
 
 // MACROS
 // INPUT_MAX_LEN: lunghezza della stringa di input dalla central-ECU: "FRENO 5\n"
-#define INPUT_MAX_LEN 9
+#define INPUT_MAX_LEN 10
 // LOG_PHRASE_LEN: lunghezza della stringa di log: "DD/MM/YYYY hh:mm:ss - FRENO 5\n"
-#define LOG_PHRASE_LEN 30
+#define LOG_PHRASE_LEN 31
 
 // File descriptor del log file
 int log_fd;
@@ -47,7 +47,7 @@ int main ( ) {
 
 	/* Inizializzazione della stringa di input che rappresenqta il comando
 	 * impartito dalla central-ECU tramite una stringa di caratteri. */
-	char increment[INPUT_MAX_LEN];
+	char decrement[INPUT_MAX_LEN];
 	int nread;
 
   /* Il ciclo infinito successivo rappresenta il cuore del processo.
@@ -59,12 +59,12 @@ int main ( ) {
    * Quest'ultimo caso da' inizio alla procedura simulativa dell'freno.
    * Il pipe e` bloccante quindi il processo attende un messaggio dalla central-ECU */
 	while(true){
-		nread = read (pipe_fd, increment, INPUT_MAX_LEN);
+		nread = read (pipe_fd, decrement, INPUT_MAX_LEN);
 		if(nread < 0){
 			perror("brake: read");
 		}
 		if(nread > 0){
-			time_log_func( log_fd,  LOG_PHRASE_LEN, BRAKE);
+			time_log_func( log_fd, LOG_PHRASE_LEN, BRAKE);
 		}
 	}
 }

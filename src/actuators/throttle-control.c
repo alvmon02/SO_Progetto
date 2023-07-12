@@ -14,7 +14,7 @@
 #define INPUT_MAX_LEN 14
 // LOG_PHRASE_LEN: lunghezza della stringa di log:
 // "DD/MM/YYYY hh:mm:ss - AUMENTO 5\n"
-#define LOG_PHRASE_LEN 32
+#define LOG_PHRASE_LEN 33
 
 // File descriptor del log file
 int log_fd;
