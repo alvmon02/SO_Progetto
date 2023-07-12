@@ -21,10 +21,10 @@
 int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 	unlink(pipe_pathname);
 	if(mkfifoat(AT_FDCWD, pipe_pathname, mode) < 0)
-		perror("service: mkfifoat pipe");
+		perror("init_pipe: mkfifoat pipe");
 	int pipe_fd;
 	while((pipe_fd = openat(AT_FDCWD, pipe_pathname, flags)) < 0){
-		perror("service: openat pipe");
+		perror("init_pipe: openat pipe");
 		sleep(1);
 	}
 	printf("Pipe %s inizialized\n", pipe_pathname);
@@ -138,7 +138,7 @@ pid_t make_process(char *program_name, int name_length, pid_t pgid, char *args) 
 	if(program_path == NULL)
 		perror("make process: malloc");
 	strcpy(program_path,"./bin/");
-	program_path = strcat(program_path, program_name);
+	strcat(program_path, program_name);
 	pid = fork();
 	if(pid < 0)
 		perror("make process: fork");

@@ -12,8 +12,8 @@
 
 // MACROS
 // INPUT_MAX_LEN: lunghezza massima della stringa proveniente dal file di
-// input: "PARCHEGGIO\0"
-#define INPUT_MAX_LEN 11
+// input: "PARCHEGGIO\n"
+#define INPUT_MAX_LEN 12
 
 void start_handler ( int );
 
@@ -21,27 +21,21 @@ void start_handler ( int );
 int log_fd;
 // File descriptor del pipe in scrittura
 int pipe_fd;
-
 int input_fd;
-
 bool start_flag = false;
 
 //La funzione main esegue le operazioni relative al componente windshield-camera
 int main ( ) {
-  errno = 0;
   signal(SIGUSR1, start_handler);
-  perror("windshield: signal eseguita");
   // Connessione del file descriptor del pipe per la comunicazione tra central
   // ECU e windshield-camera. Il protocollo impone che il pipe sia creato
   // durante la fase di inizializzazione del processo central-ECU e che venga
   // aperto in sola scrittura dal processo windshield-camera il quale vi scriva
   // una volta al secondo.
-  errno = 0;
   while((pipe_fd = openat(AT_FDCWD, "tmp/camera.pipe", O_WRONLY)) < 0){
     perror("windshield: openat pipe");
     sleep(1);
   }
-  perror("windshield: CONNECTED");
   // Connessione del file descriptor del log file. Apertura in sola scrittura.
   // Qualora il file non esista viene creato. Qualora il file sia presente
   // si mantengono le precedenti scritture. Data l'esecuzione dell'unlink
@@ -60,14 +54,13 @@ int main ( ) {
 
   // Inizializzazione della stringa di input che rappresenta il messaggio da
   // trasmettere alla central-ECU da parte del processo.
-  char *camera_input = malloc(INPUT_MAX_LEN);
+  char *camera_input = calloc(1, INPUT_MAX_LEN);
   if(camera_input == NULL){
     perror("windshield: malloc");
     exit(EXIT_FAILURE);
   }
 
   while(!start_flag){
-    perror("windshield: start_flag is false");
     sleep(1);
   }
 
@@ -92,6 +85,4 @@ int main ( ) {
 
 void start_handler(int sig){
   start_flag = true;
-  errno = 0;
-  perror("windshield: handler: start_flag is true");
 }

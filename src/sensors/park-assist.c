@@ -24,15 +24,17 @@ bool restart_flag;
 
 int main(int argc, char *argv[]){
 
+	if (argc != 2){
+		perror("park-assist: syntax error");
+		exit(EXIT_FAILURE);
+	}
+
 	start_flag = false;
 	pid_t cameras_pid;
 	int log_fd,
 		cameras_fd,
 		assist_fd,
 		counter = 0;
-
-	signal(SIGUSR1,signal_start_handler);
-	signal(SIGUSR2, restart_handler);
 
 	//Apertura del log file
 	log_fd = log_open();
@@ -55,6 +57,9 @@ int main(int argc, char *argv[]){
 
 		//Connessione alla ECU
 	assist_fd = pipe_open();
+
+	signal(SIGUSR1,signal_start_handler);
+	signal(SIGUSR2, restart_handler);
 
 	while(!start_flag)
 		sleep(1);
