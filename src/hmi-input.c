@@ -69,7 +69,7 @@ int main() {
 	// L'inserimento del comando e` stato reso case insensitive
 	while(true){
 		if(fgets(term_input, OUTPUT_MAX_LEN, stdin) == NULL){
-			perror("hmi-input: fgets");
+			// perror("hmi-input: fgets");
 			continue;
 		}
 

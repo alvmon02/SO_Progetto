@@ -154,10 +154,12 @@ pid_t make_process(char *program_name, int name_length, pid_t pgid, char *args) 
 	return pid;
 }
 
-pid_t make_sensor(char *program_name, char *mode) {
+pid_t make_sensor(char *program_name, char *mode, pid_t pgid) {
 	pid_t pid;
-	if(!(pid = fork()))
+	if(!(pid = fork())){
+		setpgid(0, pgid);
 		if(execlp("./bin/bytes-sensors","bytes-sensors", mode, program_name, NULL) < 0)
 			perror("make_sensor: execlp");
+	}
 	return pid;
 }

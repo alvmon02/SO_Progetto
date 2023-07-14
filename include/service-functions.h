@@ -36,6 +36,6 @@
 
 	pid_t make_process(char *program_name, int name_length, pid_t pgid, char *args);
 
-	pid_t make_sensor(char *, char *);
+	pid_t make_sensor(char *, char *, pid_t);
 
 #endif // SERVICE_FUNCTIONS_H_DEFINED
