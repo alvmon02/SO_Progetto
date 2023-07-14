@@ -8,7 +8,7 @@
 #include <stdbool.h>
 
 // INPUT_MAX_LEN: lunghezza massima del messaggio ricevuto in input dalla central-ECU
-#define INPUT_MAX_LEN 100
+#define INPUT_MAX_LEN 150
 
 void throttle_failed_handler ( int );
 void park_handler (int );
@@ -45,11 +45,13 @@ int main() {
 	// sul terminale da parte del processo.
 
 	while(true){
-		if(read(pipe->_fileno, ECU_input, INPUT_MAX_LEN) != 0){
+		if(read(pipe->_fileno, ECU_input, INPUT_MAX_LEN) >= 0){
 			printf("%s", ECU_input);
 			memset(ECU_input, 0, INPUT_MAX_LEN);
-		} else
-			sleep(1);
+		} else{
+			perror("hmi-out: read error");
+			exit(EXIT_FAILURE);
+		}
 	}
 }
 
