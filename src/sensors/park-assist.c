@@ -14,8 +14,8 @@
 #include "../../include/service-functions.h"
 
 
-void signal_start_handler ( int );
-void restart_handler ( int );
+void signal_handler ( int );
+// void restart_handler ( int );
 int log_open();
 int pipe_open();
 
@@ -24,8 +24,12 @@ bool restart_flag;
 
 int main(int argc, char *argv[]){
 
-	signal(SIGUSR1,signal_start_handler);
-	signal(SIGUSR2, restart_handler);
+	struct sigaction act = { 0 };
+	act.sa_flags = SA_RESTART;
+	act.sa_handler = &signal_handler;
+	sigaction(SIGUSR1, &act, NULL);
+	sigaction(SIGUSR2, &act, NULL);
+	sigaction(SIGINT, &act, NULL);
 
 	if (argc != 2){
 		perror("park-assist: syntax error");
@@ -44,13 +48,16 @@ int main(int argc, char *argv[]){
 
 	unsigned char *bytes_read = malloc(BYTES_LEN);
 	char *hex_translation = malloc(BYTES_CONVERTED),
-		*mode = argv[1];
+		 *mode = argv[1];
 
 	int input_fd;
-	if(strcmp(mode, ARTIFICIALE))
+	if(!strcmp(mode, "ARTIFICIALE")) {
 		input_fd= openat(AT_FDCWD, "urandomARTIFICIALE.binary", O_RDONLY);
-	else
+		perror("park: open ARTIFICIALE");
+	} else {
 		input_fd = open("/dev/urandom", O_RDONLY);
+		perror("park: open NORMALE");
+	}
 
 	//Creazione di un processo figlio per la gestione del surround-view-cameras
 	cameras_pid = make_sensor(CAMERAS, mode);
@@ -60,13 +67,15 @@ int main(int argc, char *argv[]){
 
 		//Connessione alla ECU
 	assist_fd = pipe_open();
-
-	while(!start_flag)
+	
+	do
 		sleep(1);
+	while(!start_flag);
+		
 
 	while(true){
 		restart_flag = false;
-		while (counter++ < PARK_TIME) {
+		while (counter++ < PARK_TIME && !restart_flag) {
 			// La Scrittura della informazione sulla pipe di comunicazione con la ECU
 			// fatta nella funzione broad_log, anche con la scrittura della info
 			// sullo file assist.log.
@@ -76,17 +85,19 @@ int main(int argc, char *argv[]){
 			// e dopo si traduce il messagio, per il invio
 			// a la ECU.
 
-			read_conv_broad(input_fd, bytes_read, hex_translation, assist_fd, log_fd);
-			perror("park assist: read_borad_log");
-
+			if(read_conv_broad(input_fd, bytes_read, hex_translation, assist_fd, log_fd) <= 0)
+				lseek(input_fd, 0, SEEK_SET);
+			
 			read(cameras_fd, bytes_read, BYTES_LEN);
 			hex(bytes_read, BYTES_LEN, hex_translation);
 			write(assist_fd, hex_translation, BYTES_CONVERTED);
-			perror("park assist: cameras transmit");
+			
 
 		}
-		kill(getppid(), SIGUSR2);
-		perror("park: kill parent usr2");
+		if(!restart_flag)
+			continue;
+		if(kill(getppid(), SIGUSR2)<0)
+			perror("park: kill parent usr2");
 		kill(cameras_pid,SIGTSTP);
 		while(!restart_flag)
 			sleep(1);
@@ -113,10 +124,14 @@ int pipe_open(){
 	return fd;
 }
 
-void signal_start_handler(int sig){
-	start_flag = true;
-}
+void signal_handler(int sig){
+	if(sig == SIGUSR1)
+		start_flag = true;
+	else if(sig == SIGUSR2)
+		restart_flag = true;
+	else if(sig == SIGINT) {
+		kill(0, SIGKILL);
+		exit(EXIT_SUCCESS);
+	}
 
-void restart_handler (int sig){
-	restart_flag = true;
 }

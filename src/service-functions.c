@@ -57,7 +57,7 @@ void broad_log (int pipe_fd, int log_fd, char * message, size_t size){
 // 8 bytes, tramite il canale di comunicazione comm_fd e li scrive nel file di log rappresentato
 // dal file descriptor log_fd. Sfrutta le funzioni hex(unsigned char *, size_t, char *) e la funzione
 // broad_log(int, int, char *, size_t)
-void read_conv_broad(int input_fd, unsigned char * input_str, char * input_hex, int comm_fd, int log_fd){
+int read_conv_broad(int input_fd, unsigned char * input_str, char * input_hex, int comm_fd, int log_fd){
 	int nread;
 	if((nread = read(input_fd, input_str, BYTES_LEN)) < 0){
 		perror("read_conv_broad: read");
@@ -68,6 +68,7 @@ void read_conv_broad(int input_fd, unsigned char * input_str, char * input_hex, 
 			broad_log(comm_fd, log_fd, input_hex, BYTES_CONVERTED);
 	}
 	sleep(1);
+	return nread;
 }
 
 // str_toupper restituisce una stringa equivalente alla stringa str

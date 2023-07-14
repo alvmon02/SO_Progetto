@@ -21,6 +21,11 @@ void emergency_arrest ( int );
 //La funzione main esegue le operazioni relative al componente brake-by-wire.c
 int main ( ) {
 
+	struct sigaction act = { 0 };
+	act.sa_flags = SA_RESTART;
+	act.sa_handler = &emergency_arrest;
+	sigaction(SIGUSR1, &act, NULL);
+
 	/* Connessione del file descriptor del pipe per la comunicazione tra central ECU e brake-by-wire.
 	 * Il protocollo impone che il pipe sia creato durante la fase di inizializzazione del processo central-ECU e che
 	 * venga aperto in sola lettura dal processo brake-by-wire il quale vi legga al bisogno. */
@@ -39,11 +44,6 @@ int main ( ) {
 		perror("open brake log");
 		exit(EXIT_FAILURE);
 	}
-
-	/* Nel caso sia inviato dalla central ECU un segnale di "PERICOLO",
-	 * rappresentato da SIGUSR1, la funzione handler che simula l'arresto
-	 * dell'auto e` la procedura emergency_arrest */
-	signal (SIGUSR1, emergency_arrest);
 
 	/* Inizializzazione della stringa di input che rappresenqta il comando
 	 * impartito dalla central-ECU tramite una stringa di caratteri. */

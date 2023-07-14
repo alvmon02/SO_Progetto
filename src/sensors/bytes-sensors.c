@@ -33,22 +33,26 @@ int main(int argc, char * argv[]){
 
 	// Verifica della corretta chiamata del processo
 	if(argc != 3){
-		perror("chiamata");
+		perror("bytes/sensors': syntax error");
 		exit(EXIT_FAILURE);
 	}
 
-	signal(SIGTSTP, signal_stp_handler);
+	struct sigaction act = { 0 };
+	act.sa_flags = SA_RESTART;
+	act.sa_handler = &signal_stp_handler;
+	sigaction(SIGTSTP, &act, NULL);
 
 	// Inizializzazione del file descriptor tramite apertura del file
 	// da cui ottenere i bytes di input.
 	// Il file aperto dipende dalla modalità di esecuzione scelta.
 	int input_fd;
-	if(!strcmp(argv[1], NORMALE)){
+	printf("%s\n", argv[1]);
+	if(!strcmp(argv[1], "NORMALE")){
 		if((input_fd = open("/dev/urandom", O_RDONLY)) < 0)
-			perror("bytes-sensors: open input");
-	} else if (!strcmp(argv[1], ARTIFICIALE)){
+			perror("bytes-sensors: open NORMALE input");
+	} else if (!strcmp(argv[1], "ARTIFICIALE")){
 		if((input_fd = openat(AT_FDCWD, "urandomARTIFICIALE.binary", O_RDONLY)) < 0)
-			perror("bytes-sensors: open input");
+			perror("bytes-sensors: open ARTIFICIALE input");
 	} else {
 		perror("bytes sensors: chiamata modalita:");
 		exit(EXIT_FAILURE);
@@ -105,11 +109,13 @@ int main(int argc, char * argv[]){
 	// DA CORREGGERE PERCHE' INIZIA SUBITO A LEGGERE E SCRIVERE ROBA NEL FILE DI LOG!
 	// La cosa piu' semplice mi pare flag con signal
 	while (true) {
-		read_conv_broad(input_fd, input_str, input_hex, comm_fd, log_fd);
+		if(read_conv_broad(input_fd, input_str, input_hex, comm_fd, log_fd) <= 0)
+			lseek(input_fd, 0, SEEK_SET);
   }
 }
 
 void signal_stp_handler(int sig) {
 	FILE * comm_file = fdopen(comm_fd, "w");
 	fflush(comm_file);
+	fclose(comm_file);
 }
