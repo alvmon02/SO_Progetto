@@ -46,7 +46,6 @@ int main(int argc, char * argv[]){
 	// da cui ottenere i bytes di input.
 	// Il file aperto dipende dalla modalità di esecuzione scelta.
 	int input_fd;
-	printf("%s\n", argv[1]);
 	if(!strcmp(argv[1], "NORMALE")){
 		if((input_fd = open("/dev/urandom", O_RDONLY)) < 0)
 			perror("bytes-sensors: open NORMALE input");
