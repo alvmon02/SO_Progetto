@@ -15,9 +15,8 @@
 
 
 void signal_handler ( int );
-// void restart_handler ( int );
 int log_open();
-int pipe_open();
+FILE * pipe_open();
 
 bool start_flag;
 bool restart_flag;
@@ -40,9 +39,8 @@ int main(int argc, char *argv[]){
 	pid_t cameras_pid;
 	int log_fd,
 		cameras_fd,
-		assist_fd,
 		counter;
-
+	FILE * assist_pipe;
 	//Apertura del log file
 	log_fd = log_open();
 
@@ -59,13 +57,13 @@ int main(int argc, char *argv[]){
 	}
 
 	//Creazione di un processo figlio per la gestione del surround-view-cameras
-	cameras_pid = make_sensor(CAMERAS, mode);
+	cameras_pid = make_sensor(CAMERAS, mode, getpid());
 	// Creazione della pipe per leggere la informazione
 	// arrivata da bytes-sensor
 	cameras_fd = initialize_pipe("tmp/cameras.pipe", O_RDONLY, 0666);
 
 		//Connessione alla ECU
-	assist_fd = pipe_open();
+	assist_pipe = pipe_open();
 	
 	do
 		sleep(1);
@@ -83,23 +81,29 @@ int main(int argc, char *argv[]){
 		// dato che cominzia con la lettura da park_assist,
 		// e dopo si traduce il messagio, per il invio
 		// a la ECU.
+
 		while (counter++ < PARK_TIME && !restart_flag) {
-			if(read_conv_broad(input_fd, hex_translation, assist_fd, log_fd) <= 0){
+			if(read_conv_broad(input_fd, hex_translation, assist_pipe->_fileno, log_fd) <= 0){
 				lseek(input_fd, 0, SEEK_SET);
 				perror("park: input file terminated: file pointer reset");
 			}
+			printf("Scrittura park numero: %d\n", counter);
 			if(read(cameras_fd, hex_translation, BYTES_CONVERTED) < 0)
 				perror("park: unable to read cameras pipe");
 			else
-				write(assist_fd, hex_translation, BYTES_CONVERTED);
+				write(assist_pipe->_fileno, hex_translation, BYTES_CONVERTED);
+			printf("Scrittura cameras numero: %d\n", counter);
+
 		}
 		if(restart_flag){
 			perror("park: incomplete park: restarting cycle");
 			continue;
 		}
-		if(kill(getppid(), SIGUSR2)<0)
-			perror("park: signaling ecu finished to print");
 		kill(cameras_pid, SIGTSTP);
+		sleep(2);
+		printf("Pippo\n");
+		if(kill(getppid(), SIGUSR2) < 0)
+			perror("park: signaling ecu finished to write");
 		while(!restart_flag)
 			sleep(1);
 		kill(cameras_pid, SIGCONT);
@@ -117,12 +121,12 @@ int log_open(){
 	return fd;
 }
 
-int pipe_open(){
-	int fd;
-	while((fd = openat(AT_FDCWD, "tmp/assist.pipe", O_WRONLY, 0666)) < 0 )
+FILE * pipe_open(){
+	FILE * pipe;
+	while((pipe = fopen("./tmp/assist.pipe", "w")) == NULL )
 		sleep(1);
 	perror("park: pipe CONNECTED");
-	return fd;
+	return pipe;
 }
 
 void signal_handler(int sig){

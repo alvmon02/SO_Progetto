@@ -210,44 +210,45 @@ int main(int argc, char **argv){
 	if(kill(parking_signal, SIGINT) < 0)
 		perror("ECU: kill parking signal");
 	char park_data[BYTES_CONVERTED];
-	bool parking_completed = false;
 	struct pipe_process park_process;
 	park_process = park_assist_init(modalita);
 	processes_groups.park_assist_group = park_process.pgid;
 	sleep(1);
 
-	int even = 0;
 	if(kill(park_process.pid, SIGUSR1) < 0)
 		perror("ECU: start signal to park error");
 
 	//CICLO PARCHEGGIO
-	while (!parking_completed) {
+	while (true) {
 		broad_log(hmi_process[WRITE].pipe_fd, log_fd,
 							"INIZIO PROCEDURA PARCHEGGIO\n\0",
 							sizeof("INIZIO PROCEDURA PARCHEGGIO\n") + 1);
-		int nread = 1;
 		park_done_flag = false;
 		int i = 1;
-		sleep(1);
+		int odd = 0;
+		char * buff = malloc(PIPE_BUF);
+		read(park_process.pipe_fd, buff, PIPE_BUF);
+		free(buff);
+		sleep(2);
 
-		while( !park_done_flag && nread > 0) {
-			nread = read(park_process.pipe_fd, park_data, BYTES_CONVERTED);
+		while( !park_done_flag ) {
+			read(park_process.pipe_fd, park_data, BYTES_CONVERTED);
 			printf("Lettura numero:%2d\t%s", i++, park_data);
     	if(!acceptable_string(park_data)){
 				printf("ECU: unacceptable input: string found %ld\n", string_search);
 				break;
 			}
-			even %= 2;
-			if ( even++ == 1 )
+			odd %= 2;
+			if ( odd++ == 1 )
 				sleep(1);
     }
 
-		if(park_done_flag && nread <= 0){
-			parking_completed = true;
+		if(park_done_flag){
 			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO COMPLETATA\n\0", sizeof("PROCEDURA PARCHEGGIO COMPLETATA\n")+1);
+			break;
 		} else {
-    		kill(park_process.pid, SIGUSR2);
-			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO INCOMPLETA\n\0", sizeof("PROCEDURA PARCHEGGIO INCOMPLETA\n")+1);
+    	kill(park_process.pid, SIGUSR2);
+			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "ERRORE PARCHEGGIO, PROCEDURA INCOMPLETA\n\n\0", sizeof("ERRORE PARCHEGGIO, PROCEDURA INCOMPLETA\n\n")+1);
 				perror("ECU: signaling park to RESTART");
 		}
 	}
@@ -256,7 +257,6 @@ int main(int argc, char **argv){
 	broad_log(hmi_process[WRITE].pipe_fd, log_fd, "TERMINAZIONE PROGRAMMA\n\0", sizeof("TERMINAZIONE PROGRAMMA\n")+1);
 
   // termino i processi dei sensori, degli attuatori e di park-assist
-	printf("pippopippo\n");
 	kill(park_process.pid, SIGINT);
 	kill(hmi_process[READ].pid, SIGKILL);
 
@@ -299,7 +299,7 @@ struct pipe_process camera_init() {
 
 struct pipe_process radar_init(char *modalita) {
 	struct pipe_process radar_process;
-	radar_process.pid = make_sensor("RADAR", modalita);
+	radar_process.pid = make_sensor("RADAR", modalita, brake_process.pgid);
 	radar_process.pipe_fd = initialize_pipe("tmp/radar.pipe", O_RDONLY, 0666);
 	return radar_process;
 }
