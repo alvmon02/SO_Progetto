@@ -41,12 +41,11 @@ int main(int argc, char *argv[]){
 	int log_fd,
 		cameras_fd,
 		assist_fd,
-		counter = 0;
+		counter;
 
 	//Apertura del log file
 	log_fd = log_open();
 
-	unsigned char *bytes_read = malloc(BYTES_LEN);
 	char *hex_translation = malloc(BYTES_CONVERTED),
 		 *mode = argv[1];
 
@@ -75,30 +74,32 @@ int main(int argc, char *argv[]){
 
 	while(true){
 		restart_flag = false;
-		while (counter++ < PARK_TIME && !restart_flag) {
+		counter = 0;
 			// La Scrittura della informazione sulla pipe di comunicazione con la ECU
-			// fatta nella funzione broad_log, anche con la scrittura della info
-			// sullo file assist.log.
-			// La Lettura della informazione dalla pipe
-			// già fatta nella parte iniziale di read_conv_broad,
-			// dato che cominzia con la lettura da park_assist,
-			// e dopo si traduce il messagio, per il invio
-			// a la ECU.
-
-			if(read_conv_broad(input_fd, bytes_read, hex_translation, assist_fd, log_fd) <= 0)
+		// fatta nella funzione broad_log, anche con la scrittura della info
+		// sullo file assist.log.
+		// La Lettura della informazione dalla pipe
+		// già fatta nella parte iniziale di read_conv_broad,
+		// dato che cominzia con la lettura da park_assist,
+		// e dopo si traduce il messagio, per il invio
+		// a la ECU.
+		while (counter++ < PARK_TIME && !restart_flag) {
+			if(read_conv_broad(input_fd, hex_translation, assist_fd, log_fd) <= 0){
 				lseek(input_fd, 0, SEEK_SET);
-			
-			read(cameras_fd, bytes_read, BYTES_LEN);
-			hex(bytes_read, BYTES_LEN, hex_translation);
-			write(assist_fd, hex_translation, BYTES_CONVERTED);
-			
-
+				perror("park: input file terminated: file pointer reset");
+			}
+			if(read(cameras_fd, hex_translation, BYTES_CONVERTED) < 0)
+				perror("park: unable to read cameras pipe");
+			else
+				write(assist_fd, hex_translation, BYTES_CONVERTED);
 		}
-		if(!restart_flag)
+		if(restart_flag){
+			perror("park: incomplete park: restarting cycle");
 			continue;
+		}
 		if(kill(getppid(), SIGUSR2)<0)
-			perror("park: kill parent usr2");
-		kill(cameras_pid,SIGTSTP);
+			perror("park: signaling ecu finished to print");
+		kill(cameras_pid, SIGTSTP);
 		while(!restart_flag)
 			sleep(1);
 		kill(cameras_pid, SIGCONT);
@@ -118,7 +119,7 @@ int log_open(){
 
 int pipe_open(){
 	int fd;
-	while((fd = openat(AT_FDCWD, "tmp/assist.pipe", O_WRONLY | O_NONBLOCK, 0666)) < 0 )
+	while((fd = openat(AT_FDCWD, "tmp/assist.pipe", O_WRONLY, 0666)) < 0 )
 		sleep(1);
 	perror("park: pipe CONNECTED");
 	return fd;

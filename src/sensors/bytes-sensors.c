@@ -109,8 +109,11 @@ int main(int argc, char * argv[]){
 	// DA CORREGGERE PERCHE' INIZIA SUBITO A LEGGERE E SCRIVERE ROBA NEL FILE DI LOG!
 	// La cosa piu' semplice mi pare flag con signal
 	while (true) {
-		if(read_conv_broad(input_fd, input_str, input_hex, comm_fd, log_fd) <= 0)
+		if(read_conv_broad(input_fd, input_hex, comm_fd, log_fd) <= 0){
 			lseek(input_fd, 0, SEEK_SET);
+			perror("bytes-sensors: input file terminated: file pointer reset");
+
+		}
   }
 }
 

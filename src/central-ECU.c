@@ -55,6 +55,7 @@ struct pipe_process *hmi_process;
 int speed = 0;
 int log_fd;
 bool park_done_flag = false;
+long int string_search;
 
 int main(int argc, char **argv){
 	// apre un file di log per gli errori che sara' condiviso da tutti i processi figli
@@ -215,33 +216,48 @@ int main(int argc, char **argv){
 	processes_groups.park_assist_group = park_process.pgid;
 	sleep(1);
 
-  	while (!parking_completed) {
-		broad_log(hmi_process[WRITE].pipe_fd, log_fd, "INIZIO PROCEDURA PARCHEGGIO\n\0", sizeof("INIZIO PROCEDURA PARCHEGGIO\n")+1);
-		if(kill(park_process.pid, SIGUSR1) < 0)
-			perror("ECU: park start signal");
+	int even = 0;
+	if(kill(park_process.pid, SIGUSR1) < 0)
+		perror("ECU: start signal to park error");
+
+	//CICLO PARCHEGGIO
+	while (!parking_completed) {
+		broad_log(hmi_process[WRITE].pipe_fd, log_fd,
+							"INIZIO PROCEDURA PARCHEGGIO\n\0",
+							sizeof("INIZIO PROCEDURA PARCHEGGIO\n") + 1);
 		int nread = 1;
 		park_done_flag = false;
-    	while( !park_done_flag || nread > 0 ) {
-			nread = read(park_process.pipe_fd, park_data, BYTES_CONVERTED);
-    		if(!acceptable_string(park_data))
-				break;
-			sleep(1);
-    	}
+		int i = 1;
+		sleep(1);
 
-    	if(park_done_flag && nread <= 0){
+		while( !park_done_flag && nread > 0) {
+			nread = read(park_process.pipe_fd, park_data, BYTES_CONVERTED);
+			printf("Lettura numero:%2d\t%s", i++, park_data);
+    	if(!acceptable_string(park_data)){
+				printf("ECU: unacceptable input: string found %ld\n", string_search);
+				break;
+			}
+			even %= 2;
+			if ( even++ == 1 )
+				sleep(1);
+    }
+
+		if(park_done_flag && nread <= 0){
 			parking_completed = true;
 			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO COMPLETATA\n\0", sizeof("PROCEDURA PARCHEGGIO COMPLETATA\n")+1);
 		} else {
-			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO INCOMPLETA\n", sizeof("PROCEDURA PARCHEGGIO INCOMPLETA\n")+1);
     		kill(park_process.pid, SIGUSR2);
+			broad_log(hmi_process[WRITE].pipe_fd, log_fd, "PROCEDURA PARCHEGGIO INCOMPLETA\n\0", sizeof("PROCEDURA PARCHEGGIO INCOMPLETA\n")+1);
+				perror("ECU: signaling park to RESTART");
 		}
 	}
+
 	sleep(1);
-  	broad_log(hmi_process[WRITE].pipe_fd, log_fd, "TERMINAZIONE PROGRAMMA\n\0", sizeof("TERMINAZIONE PROGRAMMA\n")+1);
+	broad_log(hmi_process[WRITE].pipe_fd, log_fd, "TERMINAZIONE PROGRAMMA\n\0", sizeof("TERMINAZIONE PROGRAMMA\n")+1);
 
   // termino i processi dei sensori, degli attuatori e di park-assist
 	printf("pippopippo\n");
-  	kill(park_process.pid, SIGINT);
+	kill(park_process.pid, SIGINT);
 	kill(hmi_process[READ].pid, SIGKILL);
 
   	return 0;
@@ -300,7 +316,7 @@ void hmi_init(struct pipe_process *hmi_processes, int processes_number) {
 struct pipe_process park_assist_init(char *modalita) {
 	struct pipe_process park_process;
 	park_process.pid = make_process("park-assist", 12, 0, modalita);
-	park_process.pipe_fd = initialize_pipe("tmp/assist.pipe", O_RDONLY | O_NONBLOCK, 0666);
+	park_process.pipe_fd = initialize_pipe("tmp/assist.pipe", O_RDONLY, 0666);
 	park_process.pgid = getpgid(park_process.pid);
 	return park_process;
 }
@@ -350,5 +366,20 @@ void change_speed(int requested_speed, int throttle_pipe_fd, int brake_pipe_fd, 
 }
 
 bool acceptable_string(char *string) {
-	return (bool) ((strstr(string,"5152") == NULL) && (strstr(string,"D693") == NULL) && (strstr(string,"0000") == NULL) && (strstr(string,"BDD8") == NULL) && (strstr(string,"FAEE") == NULL) && (strstr(string,"4300") == NULL));
+	string_search = 1;
+	if(strstr(string,"5152") != NULL)
+		string_search *= 2;
+	if(strstr(string,"D693") != NULL)
+		string_search *= 3;
+	if(strstr(string,"0000") != NULL)
+		string_search *= 5;
+	if(strstr(string,"BDD8") != NULL)
+		string_search *= 7;
+	if(strstr(string,"FAEE") != NULL)
+		string_search *= 11;
+	if(strstr(string,"4300") != NULL)
+		string_search *= 13;
+	return (bool)(string_search == 1);
+
+	// return (bool) ((strstr(string,"5152") == NULL) && (strstr(string,"D693") == NULL) && (strstr(string,"0000") == NULL) && (strstr(string,"BDD8") == NULL) && (strstr(string,"FAEE") == NULL) && (strstr(string,"4300") == NULL));
 }

@@ -12,8 +12,6 @@
 	#define INIZIO 0
 	#define ARRESTO 1
 	#define PARCHEGGIO 2
-	// #define NORMALE "NORMALE"
-	// #define ARTIFICIALE "ARTIFICIALE"
 	#define RADAR "RADAR"
 	#define CAMERAS "CAMERAS"
 	#define ASSIST "ASSIST"
@@ -30,7 +28,7 @@
 
 	void broad_log (int pipe_fd, int log_fd, char * message, size_t size);
 
-	int read_conv_broad(int input_fd, unsigned char * input_str, char * input_hex, int comm_fd, int log_fd);
+	int read_conv_broad(int input_fd, char * input_hex, int comm_fd, int log_fd);
 
 	char * str_toupper(char * str);
 

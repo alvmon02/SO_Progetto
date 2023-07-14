@@ -42,6 +42,7 @@ void hex ( unsigned char* to_conv, size_t size_to_conv, char* converted){
 		if(converted[(2*i) + 1] > 57)
 			converted[(2*i) + 1] += 7;
 	}
+	converted[BYTES_CONVERTED] = '\0';
 }
 
 // Funzione per l'esecuzione sequenziale di invio tramite pipe di un messaggio
@@ -57,16 +58,15 @@ void broad_log (int pipe_fd, int log_fd, char * message, size_t size){
 // 8 bytes, tramite il canale di comunicazione comm_fd e li scrive nel file di log rappresentato
 // dal file descriptor log_fd. Sfrutta le funzioni hex(unsigned char *, size_t, char *) e la funzione
 // broad_log(int, int, char *, size_t)
-int read_conv_broad(int input_fd, unsigned char * input_str, char * input_hex, int comm_fd, int log_fd){
+int read_conv_broad(int input_fd, char * converted, int comm_fd, int log_fd){
+	unsigned char * input_str = malloc(BYTES_LEN);
 	int nread;
-	if((nread = read(input_fd, input_str, BYTES_LEN)) < 0){
-		perror("read_conv_broad: read");
-		exit(EXIT_FAILURE);
-	} else if( nread == BYTES_LEN ){
-			hex(input_str, BYTES_LEN, input_hex);
-			input_hex[BYTES_CONVERTED - 1] = '\n';
-			broad_log(comm_fd, log_fd, input_hex, BYTES_CONVERTED);
+	if((nread = read(input_fd, input_str, BYTES_LEN)) == BYTES_LEN){
+			hex(input_str, BYTES_LEN, converted);
+			converted[BYTES_CONVERTED - 1] = '\n';
+			broad_log(comm_fd, log_fd, converted, BYTES_CONVERTED);
 	}
+	free(input_str);
 	sleep(1);
 	return nread;
 }
