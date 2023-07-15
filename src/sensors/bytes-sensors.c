@@ -70,7 +70,7 @@ int main(int argc, char * argv[]){
 			sleep(1);
 		}
 	} else if (!strcmp(argv[2], CAMERAS)){
-		if((log_fd = openat (AT_FDCWD, "log/cameras.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
+		if((log_fd = openat (AT_FDCWD, "log/cameras.log", O_WRONLY | O_TRUNC | O_CREAT | O_NONBLOCK, 0644)) < 0){
 			perror("bytes-sensors: openat log");
 			exit(EXIT_FAILURE);
 		}

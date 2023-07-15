@@ -27,7 +27,6 @@ int initialize_pipe(char * pipe_pathname, int flags, mode_t mode){
 		perror("init_pipe: openat pipe");
 		sleep(1);
 	}
-	printf("Pipe %s inizialized\n", pipe_pathname);
 	return pipe_fd;
 }
 

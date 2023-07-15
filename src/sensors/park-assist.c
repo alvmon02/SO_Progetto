@@ -29,10 +29,6 @@ bool restart_flag;
 int main(int argc, char *argv[]) {
 
   signal(SIGINT, &signal_handler);
-  // struct sigaction act = { 0 };
-  // act.sa_flags = SA_RESTART;
-  // act.sa_handler = &signal_handler;
-  // sigaction(SIGINT, &act, NULL);
 
   if (argc != 2) {
     perror("park-assist: syntax error");
@@ -58,9 +54,9 @@ int main(int argc, char *argv[]) {
 
   // Creazione di un processo figlio per la gestione del surround-view-cameras
   cameras_pid = make_sensor(CAMERAS, mode, getpid());
-  // Creazione della pipe per leggere la informazione
+  // Creazione della pipe per leggere l'informazione
   // arrivata da bytes-sensor
-  cameras_fd = initialize_pipe("./tmp/cameras.pipe", O_RDONLY, 0666);
+  cameras_fd = initialize_pipe("./tmp/cameras.pipe", O_RDONLY | O_NONBLOCK, 0666);
 
   // Connessione alla ECU
   sock_fd = initialize_client_socket("./tmp/assist.sock");
@@ -68,7 +64,6 @@ int main(int argc, char *argv[]) {
 
   do {
     read(sock_fd, buf, ECU_MESSAGE_MAX_LEN);
-    printf("%s\n", buf);
     sleep(1);
   } while (strcmp(buf, "INIZIO\n"));
 
@@ -84,7 +79,6 @@ int main(int argc, char *argv[]) {
     counter = 0;
 
     while (counter++ < PARK_TIME) {
-      printf("Scrittura park numero: %d\n", counter);
       if (read_conv_broad(input_fd, hex_translation, sock_fd, log_fd) <= 0) {
         lseek(input_fd, 0, SEEK_SET);
         perror("park: input file terminated: file pointer reset");
@@ -95,7 +89,6 @@ int main(int argc, char *argv[]) {
       if (read(cameras_fd, hex_translation, BYTES_CONVERTED) < 0)
         perror("park: unable to read cameras pipe");
       else{
-      	printf("Scrittura cameras numero: %d\n", counter);
         write(sock_fd, hex_translation, BYTES_CONVERTED);
 	  }
       read(sock_fd, buf, ECU_MESSAGE_MAX_LEN);
@@ -112,19 +105,6 @@ int main(int argc, char *argv[]) {
 	close(sock_fd);
     exit(EXIT_SUCCESS);
   }
-  // }
-  // if(restart_flag){
-  // 	perror("park: incomplete park: restarting cycle");
-  // 	continue;
-  // }
-  // kill(cameras_pid, SIGTSTP);
-  // sleep(2);
-  // printf("Pippo\n");
-  // if(kill(getppid(), SIGUSR2) < 0)
-  // 	perror("park: signaling ecu finished to write");
-  // while(!restart_flag)
-  // 	sleep(1);
-  // kill(cameras_pid, SIGCONT);
 }
 
 int log_open() {

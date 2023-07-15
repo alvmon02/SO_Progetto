@@ -87,7 +87,7 @@ central-ECU */
  * Ai fini del programma risulta comunque una differenza minima che
  * non ne` compromette il funzionamento */
 bool throttle_failed() {
-  if ((rand() % 10000) == 0) {
+  if ((rand() % 100000) == 0) {
     if(kill(getppid(), SIGUSR1)){
       perror("throttle: kill");
       exit(EXIT_FAILURE);

@@ -44,7 +44,6 @@ int main() {
 		sleep(1);
 	}
 	errno = 0;
-	perror("hmi-input: per sport");
 	perror("hmi-input: CONNECTED");
 	// Inizializzazione della stringa di input che rappresenta il comando
 	// inserito nel terminale da parte dell'esecutore del programma.
