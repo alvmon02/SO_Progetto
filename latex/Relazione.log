@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Arch Linux) (preloaded format=pdflatex 2023.7.15)  15 JUL 2023 17:58
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Arch Linux) (preloaded format=pdflatex 2023.7.15)  15 JUL 2023 18:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1029,6 +1029,14 @@ Overfull \hbox (17.06631pt too wide) in paragraph at lines 117--118
  []
 
 [2{/usr/share/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}]
+Overfull \hbox (13.29727pt too wide) in paragraph at lines 124--126
+\T1/cmtt/m/n/10.95 ARTIFICIALE $\OMS/cmsy/m/n/10.95 ^^@^^@$\T1/cmtt/m/n/10.95 t
+erm konsole \T1/phv/m/n/10.95 op-pure \T1/cmtt/m/n/10.95 ./ADAS-simulator ARTIF
+ICIALE $\OMS/cmsy/m/n/10.95 ^^@^^@$\T1/cmtt/m/n/10.95 term xfce4-terminal\T1/ph
+v/m/n/10.95 ) 
+ []
+
+
 
 pdfTeX warning: /usr/bin/pdflatex (file ./include/SO_Progetto_Diagrammi-Gerarch
 ia.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
@@ -1146,19 +1154,14 @@ Underfull \hbox (badness 3168) in paragraph at lines 157--157
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 157--157
+Underfull \hbox (badness 6268) in paragraph at lines 157--157
 []|\T1/phv/m/n/10.95 Nella \T1/phv/m/sl/10.95 central-ECU\T1/phv/m/n/10.95 , un
-a vol-
+a vol-ta
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 157--157
-\T1/phv/m/n/10.95 ta rice-vu-to il seg-nale di
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 157--157
-\T1/phv/m/sl/10.95 PERI-CO-LO\T1/phv/m/n/10.95 , gesti-to tramite
+Underfull \hbox (badness 1127) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 rice-vu-to il seg-nale di \T1/phv/m/sl/10.95 fal-li-men-
  []
 
 
@@ -1167,13 +1170,13 @@ Underfull \hbox (badness 1009) in paragraph at lines 157--157
  []
 
 
-Underfull \hbox (badness 5787) in paragraph at lines 157--157
-\T1/phv/m/n/10.95 la stringa di ter-mi-nazione e
+Underfull \hbox (badness 1057) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 la pro-ce-du-ra di ar-resto, stam-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 157--157
-\T1/phv/m/n/10.95 si con-clude l'ese-cuzione dei
+Underfull \hbox (badness 2781) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 pa la stringa di ter-mi-nazione
  []
 
 LaTeX Font Info:    Font shape `T1/phv/m/it' in size <6> not available
@@ -1259,7 +1262,7 @@ m-super/sftt1000.pfb></usr/share/texmf-dist/fonts/type1/public/cm-super/sftt109
 xmf-dist/fonts/type1/urw/helvetic/uhvbo8a.pfb></usr/share/texmf-dist/fonts/type
 1/urw/helvetic/uhvr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvro
 8a.pfb>
-Output written on Relazione.pdf (8 pages, 258894 bytes).
+Output written on Relazione.pdf (8 pages, 258839 bytes).
 PDF statistics:
  299 PDF objects out of 1000 (max. 8388607)
  246 compressed objects within 3 object streams

@@ -20,7 +20,7 @@
 #define MOD_LENGTH 12
 
 /*
-  struttura per salvare i processi con i loro pid, il gruppo a cui appartengono
+  Struttura per salvare i processi con i loro pid, il gruppo a cui appartengono
   e il file descriptor della socket o pipeche serve per comunicare col processo
   brake_process e park_process sono globali perche' e' necessario conoscere
   i loro pid e pgid nell'ECU_signal_handler
@@ -32,7 +32,7 @@ struct process {
 } brake_process, park_process;
 
 /*
-  struttura globale che serve per raggruppare i processi nelle differenti
+  Struttura globale che serve per raggruppare i processi nelle differenti
   categorie per poterli chiudere con un solo comando in maniera piu' leggibile
 */
 struct groups {
@@ -49,7 +49,7 @@ struct process camera_init();
 struct process radar_init(char *);
 struct process park_assist_init(char *);
 int initialize_server_socket(const char *);
-void hmi_init(struct process *, int);
+void hmi_init(struct process *);
 void arrest(pid_t);
 void ECU_signal_handler(int);
 void send_command(int, int, int, char *, size_t);
@@ -210,14 +210,31 @@ int main(int argc, char **argv) {
     perror("ECU: fdopen camera");
   }
 
+  /*
+    AVVIO LETTURA WINDSHIELD
+    Viene inviato un segnale al processo camera affiche' esca dal ciclo di attesa in cui e` bloccato e inizia
+    l'esecuzione delle letture dal file e delle scritture sulla pipe
+  */
   if (kill(camera_process.pid, SIGUSR1) < 0) {
     perror("ECU: kill camera");
   }
 
+  /*
+    CICLO DI VIAGGIO
+    Il ciclo di viaggio esegue le seguenti operazioni:
+    - lettura da radar;
+    - lettura da hmi-input con conseguenti operazioni di interruzione ciclo nel caso di richiesta parcheggio,
+    chiamata della procedura di arresto o segnalazione di errore all'hmi-input;
+    - lettura da camera e conseguenti operazioni di interruzione ciclo nel caso di richiesta parcheggio,
+    svolta tramite la chiamata a send_command(), aggiornamento della velocita' richiesta tramite un'assegnazione,
+    arresta l'auto in caso di pericolo;
+    - modifica della velocita' e invio comando all'attuatore corretto in baso al segno dell'accelerazione
+    - attesa di un secondo.
+  */
   while (travel_flag) {
+    // lettura camera.pipe
     read(radar_process.comm_fd, radar_buf, BYTES_CONVERTED);
-    // legge dalla hmi esce arresta la macchina o esce dal ciclo del viaggio
-    // per frenare e poi eseguire la procedura di parcheggio
+    // lettura hmi-in.pipe
     if (read(hmi_process[READ].comm_fd, &hmi_command, sizeof(short int)) > 0) {
       if (hmi_command == PARCHEGGIO)
         break;
@@ -226,11 +243,8 @@ int main(int argc, char **argv) {
       else
         kill(hmi_process[READ].pid, SIGUSR2);
     }
-    // legge da front-windshield-camera e esegue l'azione opportuna:
-    //	- esce dal ciclo per eseguire frenata e parcheggio;
-    //	- arresta la macchina in caso di pericolo;
-    //	- manda il comando della sterzata a steer-by-wire se deve girare;
-    //	- se riceve un numero imposta la velocita' desiderata dalla camera;
+
+    // lettura camera.pipe
     if (fgets(camera_buf, HMI_COMMAND_LENGTH, camera_stream) == NULL)
       perror("ECU: fgets camera");
     if (!strcmp(camera_buf, "PARCHEGGIO\n"))
@@ -245,47 +259,72 @@ int main(int argc, char **argv) {
       requested_speed = temp_v;
     sleep(1);
 
-    // aggiorna la velocita' della macchina mandando un comando INCREMENTO 5 o
-    // INCREMENTO 5 a throttle o brake per avvicinare di 5 la velocita' attuale
-    // a quella desiderata
+    // aggiornamento velocita'
     if (speed != requested_speed)
       change_speed(requested_speed, throttle_process.comm_fd,
                    brake_process.comm_fd, log_fd, hmi_process[WRITE].comm_fd);
   }
 
-  // 
+  /*
+    TERMINAZIONE VIAGGIO
+    Vengono terminati immediatamente i processi attuatori e sensori (escluso brake) una volta ricevuta
+    l'indicazione di parcheggio. Vengono poi liberati buffers per le lettura da radar e camera.
+  */
   if (kill(-processes_groups.actuators_group, SIGKILL) < 0)
     perror("ECU: kill signal to actuators");
   
   if (kill(-processes_groups.sensors_group, SIGKILL) < 0)
     perror("ECU: kill signal to sensors");
+  free(radar_buf);
+  free(camera_buf);
   
-  
+  /*
+    CICLO DECELERAZIONE
+    Vengono eseguite una serie di frenate tramite brake per portare gradualmente la velocita' a zero.
+  */
   while (speed > 0) {
     change_speed(0, throttle_process.comm_fd, brake_process.comm_fd, log_fd,
                  hmi_process[WRITE].comm_fd);
     sleep(1);
   }
 
+  // Terminazione del processo brake
   if (kill(brake_process.pid, SIGKILL) < 0)
     perror("ECU: kill signal to brake");
 
-  // avvia la procedura di parcheggio
-
+  /*
+    PREPARAZIONE PER IL CICLO DI VIAGGIO
+    Si crea un buffer per la lettura dei bytes ricevuti da parcheggio, si inizializza il processo
+    park_assist tramite la funzione park_assist_init e si conserva il pgid del processo per una
+    chiusura immediata successivamente alla terminazione del parcheggio. Si attende un secondo
+    prima di scrivere sulla socket per dare al processo park assist il tempo di connettersi alla socket.
+  */
   char park_data[BYTES_CONVERTED];
   park_process = park_assist_init(modalita);
   processes_groups.park_assist_group = park_process.pgid;
   sleep(1);
 
+  /*
+    CICLO PARCHEGGIO
+    Viene dato inizio al ciclo di parcheggio.
+    Nel ciclo vengono loggate le stringhe che segnalano l'inizio del ciclo e, in caso di fallimento,
+    una stringa che rappresenta la terminazione della procedura con insuccesso, per rientrare nel
+    ciclo e rieseguire la procedura.
+    Viene poi stanziato un ciclo di letture nel quale si leggere iterativamente da assist.sock
+    e si scrive la stringa "CONTINUA\n" in caso i bytes siano accettabili, mentre si esce dal ciclo
+    in caso i bytes contengano uno dei pattern indicati nella funzione acceptable_string().
+    Una volta usciti dal ciclo si controlla che la stringa sia uguale a "FINITO\n", rappresentante
+    la terminazione di invii da parte di park assist, e si stampa in caso un messaggio di completamento
+    della procedura con successo e si esce dal ciclo di parcheggio. In caso alternativo invece
+    significa che la stringa inserita nel buffer e' "RIAVVIO", si stampa quindi la stringa di insuccesso
+    e si ritorna all'inizio del ciclo principale.
+  */
   write(park_process.comm_fd, "INIZIO\n\0", sizeof("INIZIO\n") + 1);
-
-  // CICLO PARCHEGGIO
   while (true) {
     broad_log(hmi_process[WRITE].comm_fd, log_fd,
               "INIZIO PROCEDURA PARCHEGGIO\n\0",
               sizeof("INIZIO PROCEDURA PARCHEGGIO\n") + 1);
 
-    int i = 1;
     while (true) {
       read(park_process.comm_fd, park_data, BYTES_CONVERTED);
 
@@ -302,27 +341,33 @@ int main(int argc, char **argv) {
     } else {
       write(park_process.comm_fd, "RIAVVIO\n\0", sizeof("RIAVVIO\n") + 1);
       broad_log(hmi_process[WRITE].comm_fd, log_fd,
-                "ERRORE PARCHEGGIO, PROCEDURA INCOMPLETA\n\n\0",
-                sizeof("ERRORE PARCHEGGIO, PROCEDURA INCOMPLETA\n\n") + 1);
+                "ERRORE PARCHEGGIO, PROCEDURA INCOMPLETA\n\0",
+                sizeof("ERRORE PARCHEGGIO, PROCEDURA INCOMPLETA\n") + 1);
       perror("ECU: riavvio parcheggio");
       read(park_process.comm_fd, NULL, PIPE_BUF);
     }
   }
 
-  sleep(1);
+  /*
+    TERMINAZIONE PROGRAMMA
+    Si conclude il programma stampando su hmi-output il messaggio corrispondente e chiudendo
+    la socket, infine termina i processi figli park assist (tramite INT perche' lo possa gestire)
+    e hmi-input.
+  */
+
   broad_log(hmi_process[WRITE].comm_fd, log_fd, "TERMINAZIONE PROGRAMMA\n\0",
             sizeof("TERMINAZIONE PROGRAMMA\n") + 1);
-
-  // chiudo la socket con park_assist
   close(park_process.comm_fd);
-
-  // termino i processi dei sensori, degli attuatori e di park-assist
-  kill(park_process.pid, SIGKILL);
+  kill(park_process.pid, SIGINT);
   kill(hmi_process[READ].pid, SIGKILL);
-
   return 0;
 }
 
+/*
+  FUNZIONI DI INIZIALIZZAZIONE DEI PROCESSI FIGLI
+  Vengono eseguite le inizializzazioni dei processi tramite delle fork(2) in pake_process, si inizializzano poi le pipe
+  nel padre e si conservano il pgid nelle strutture.
+*/
 struct process brake_init() {
   struct process brake_process;
   brake_process.pid = make_process("brake-by-wire", 14, 0, NULL);
@@ -338,6 +383,7 @@ struct process steer_init() {
   steer_process.pgid = getpgid(steer_process.pid);
   return steer_process;
 }
+
 
 struct process throttle_init(pid_t actuator_group) {
   struct process throttle_process;
@@ -364,7 +410,20 @@ struct process radar_init(char *modalita) {
   return radar_process;
 }
 
-void hmi_init(struct process *hmi_processes, int processes_number) {
+struct process park_assist_init(char *modalita) {
+  struct process park_process;
+  park_process.pid = make_process("park-assist", 12, 0, modalita);
+  park_process.comm_fd = initialize_server_socket("./tmp/assist.sock");
+  park_process.pgid = getpgid(park_process.pid);
+  return park_process;
+}
+
+/*
+  FUNZIONE DI INIZIALIZZAZIONE DEI PROCESSI HMI
+  Vengono eseguite le inizializzazioni dei processi tramite delle fork(2) in make_process(), si inizializzano poi le pipe
+  nel padre e si conservano il pgid nelle strutture.
+*/
+void hmi_init(struct process *hmi_processes) {
   (hmi_processes + READ)->pid = make_process("hmi-input", 10, getpid(), NULL);
   (hmi_processes + READ)->comm_fd =
       initialize_pipe("tmp/hmi-in.pipe", O_RDONLY | O_NONBLOCK, 0666);
@@ -375,29 +434,29 @@ void hmi_init(struct process *hmi_processes, int processes_number) {
   return;
 }
 
-struct process park_assist_init(char *modalita) {
-  struct process park_process;
-  park_process.pid = make_process("park-assist", 12, 0, modalita);
-  park_process.comm_fd = initialize_server_socket("./tmp/assist.sock");
-  park_process.pgid = getpgid(park_process.pid);
-  return park_process;
-}
-
+/*
+  FUNZIONI DI INIZIALIZZAZIONE DELLA SOCKET
+  Viene eseguita tutta la fase di inizializzazione della socket, comprensiva della funzione accept(2).
+*/
 int initialize_server_socket(const char *socket_name) {
   int sock_fd;
   int cli_fd;
   unlink(socket_name);
+  // creazione socket
   while ((sock_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
     perror("ECU: socket function error");
     sleep(1);
   }
+  //creazione struttura sockaddr_un per il server
   struct sockaddr_un serv_addr;
   serv_addr.sun_family = AF_UNIX;
   strcpy(serv_addr.sun_path, socket_name);
+  // ciclo bind per collegamento sock_fd con la struttura
   while (bind(sock_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
     perror("ECU: socket bind error");
     sleep(1);
   }
+  // attesa di ricezione di connessione da parte di client
   if (listen(sock_fd, 1) < 0) {
     perror("ECU: socket listen error");
     sleep(1);
@@ -408,9 +467,18 @@ int initialize_server_socket(const char *socket_name) {
     perror("ECU: accept function error");
     sleep(1);
   }
+  // viene ritornato il fd della socket in comune con il client
   return cli_fd;
 }
 
+/*
+  FUNZIONE PER LA GESTIONE DEI SEGNALI
+  La funzione viene utilizzata per gestire i segnali SIGUSR1 e SIGINT
+  - SIGUSR1: rappresenta il fallimento dell'accelerazione, arresta quindi l'auto,
+  comunica la terminazione del programma e uccide i processi.
+  - SIGINT : rappresenta il segnale di interruzione da terminale (inoltrato da hmi-input),
+  termina tutti i processi e conclude l'esecuzione del programma.
+*/
 void ECU_signal_handler(int sig) {
   if (sig == SIGUSR1) {
     // significa che ha fallito l'accelerazione
@@ -430,12 +498,16 @@ void ECU_signal_handler(int sig) {
     kill(-processes_groups.sensors_group, SIGKILL);
     kill(-processes_groups.park_assist_group, SIGKILL);
     kill(-processes_groups.hmi_group, SIGKILL);
-    umask(022);
     close(park_process.comm_fd);
     exit(EXIT_SUCCESS);
   }
 }
 
+/*
+  FUNZIONE DI ARRESTO
+  La funzione resetta la velocita' della macchina dopo aver loggato l'arresto dell'auto e aver segnalato al processo
+  la necessita di fermarsi tramite il comando SIGUSR1.
+*/
 void arrest(pid_t brake_process) {
   broad_log(hmi_process[WRITE].comm_fd, log_fd, "ARRESTO AUTO\n\0",
             sizeof("ARRESTO AUTO\n") + 1);
@@ -443,12 +515,22 @@ void arrest(pid_t brake_process) {
   speed = 0;
 }
 
+/*
+  FUNZIONE PER L'INVIO DI COMANDI AGLI ATTUATORI
+  Invia il comando all'attuatore, lo logga e lo scrive sull'hmi-out
+*/
 void send_command(int actuator_pipe_fd, int log_fd, int hmi_out_fd,
                   char *command, size_t command_size) {
   broad_log(actuator_pipe_fd, log_fd, command, command_size);
   write(hmi_out_fd, command, command_size);
 }
 
+
+/*
+  FUNZIONE PER LA GESTIONE DELLA VELOCITA'
+  La funzione aumenta la velocita, inviando il comando a throttle, se la velocita richiesta e' maggiore della attuale,
+  mentre manda un comando a brake se la velocita richiesta e' inferiore a quella attuale.
+*/
 void change_speed(int requested_speed, int throttle_pipe_fd, int brake_pipe_fd,
                   int log_fd, int hmi_pipe_fd) {
   if (requested_speed > speed) {
@@ -462,6 +544,11 @@ void change_speed(int requested_speed, int throttle_pipe_fd, int brake_pipe_fd,
   }
 }
 
+/*
+  FUNZIONE PER LA RICERCA DEI PATTERN
+  Tramite la funzione strstr(3) si ricercano i pattern predefiniti all'interno della stringa. In caso
+  vi sia almeno uno di questi pattern la funzione restituisce false (string not acceptable).
+*/
 bool acceptable_string(char *string) {
   if (strstr(string, "172A") != NULL || (strstr(string, "D693") != NULL) ||
       strstr(string, "0000") != NULL || strstr(string, "BDD8") != NULL ||
