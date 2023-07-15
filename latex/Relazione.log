@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Arch Linux) (preloaded format=pdflatex 2023.4.11)  23 JUN 2023 15:36
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Arch Linux) (preloaded format=pdflatex 2023.7.15)  15 JUL 2023 18:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -35,7 +35,7 @@ Package: inputenc 2021/02/14 v1.3d Input encoding file
 Package: babel 2023/02/13 3.86 The Babel package
 \babel@savecnt=\count193
 \U@D=\dimen141
-\l@unhyphenated=\language87
+\l@unhyphenated=\language3
 
 (/usr/share/texmf-dist/tex/generic/babel/txtbabel.def)
 \bbl@readstream=\read2
@@ -43,20 +43,33 @@ Package: babel 2023/02/13 3.86 The Babel package
 
 (/usr/share/texmf-dist/tex/generic/babel-english/english.ldf
 Language: english 2017/06/06 v3.3r English support from the babel system
+Package babel Info: Hyphen rules for 'british' set to \l@english
+(babel)             (\language0). Reported on input line 82.
+Package babel Info: Hyphen rules for 'UKenglish' set to \l@english
+(babel)             (\language0). Reported on input line 83.
 Package babel Info: Hyphen rules for 'canadian' set to \l@english
 (babel)             (\language0). Reported on input line 102.
-Package babel Info: Hyphen rules for 'australian' set to \l@ukenglish
-(babel)             (\language21). Reported on input line 105.
-Package babel Info: Hyphen rules for 'newzealand' set to \l@ukenglish
-(babel)             (\language21). Reported on input line 108.
+Package babel Info: Hyphen rules for 'australian' set to \l@english
+(babel)             (\language0). Reported on input line 105.
+Package babel Info: Hyphen rules for 'newzealand' set to \l@english
+(babel)             (\language0). Reported on input line 108.
 )
 (/usr/share/texmf-dist/tex/generic/babel-italian/italian.ldf
 Language: italian 2022/03/27 v.1.4.07 Italian support for the babel system
+
+
+Package babel Warning: No hyphenation patterns were preloaded for
+(babel)                the language 'Italian' into the format.
+(babel)                Please, configure your TeX system to add them and
+(babel)                rebuild the format. Now I will use the patterns
+(babel)                preloaded for \language=0 instead on input line 21.
+
+Package babel Info: Hyphen rules for 'italian' set to \l@english
+(babel)             (\language0). Reported on input line 22.
 \it@lettering=\count195
 \it@doublequoteactive=\count196
 \it@ISOcompliance=\count197
-))
-(/usr/share/texmf-dist/tex/generic/babel/locale/it/babel-italian.tex
+)) (/usr/share/texmf-dist/tex/generic/babel/locale/it/babel-italian.tex
 Package babel Info: Importing font and identification data for italian
 (babel)             from babel-it.ini. Reported on input line 11.
 )
@@ -968,140 +981,291 @@ LaTeX Font Info:    Font shape `T1/phv/m/it' in size <10.95> not available
 (Font)              Font shape `T1/phv/m/sl' tried instead on input line 93.
 LaTeX Font Info:    Font shape `T1/phv/b/it' in size <10.95> not available
 (Font)              Font shape `T1/phv/b/sl' tried instead on input line 93.
+
+Overfull \hbox (3.35764pt too wide) in paragraph at lines 93--99
+\T1/phv/m/n/10.95 I $[]$, at-traver-so l'ac-qui-sizione di dati dal file \T1/ph
+v/m/sl/10.95 uran-do-mAR-TI-FI-CIALE.binary \T1/phv/m/n/10.95 o dal dis-pos-i-t
+i-vo \T1/phv/m/sl/10.95 /dev/uran-
+ []
+
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf-dist/fonts
 /enc/dvips/base/8r.enc}]
 
 Package hyperref Warning: Difference (3) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 100.
+(hyperref)                than one, level fixed on input line 101.
 
 
 Package hyperref Warning: Difference (4) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 104.
+(hyperref)                than one, level fixed on input line 105.
 
 LaTeX Font Info:    Trying to load font information for TS1+phv on input line 1
-06.
+07.
 (/usr/share/texmf-dist/tex/latex/psnfss/ts1phv.fd
 File: ts1phv.fd 2020/03/25 scalable font definitions for TS1/phv.
 )
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 1
-10.
+LaTeX Font Info:    Font shape `T1/phv/m/it' in size <9> not available
+(Font)              Font shape `T1/phv/m/sl' tried instead on input line 111.
 
+Underfull \hbox (badness 5607) in paragraph at lines 111--111
+[][][]\T1/phv/m/n/9 NOTA SUL-LA PORTA-BIL-ITÀ: è sta-to pre-so come rifer-i-men
+-to per la porta-bil-ità del sis-tema lo stan-dard
+ []
+
+
+Package hyperref Warning: Difference (3) between bookmark levels is greater 
+(hyperref)                than one, level fixed on input line 113.
+
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 1
+16.
 (/usr/share/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
 )
-
-Package hyperref Warning: Difference (3) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 112.
-
-
-Overfull \hbox (17.06631pt too wide) in paragraph at lines 116--117
-[]\T1/phv/m/n/10.95 Spostarsi nel-la car-tel-la crea-ta-si con l'e-stra-zio-ne.
- (Esem-pio co-man-do: \T1/cmtt/m/n/10.95 cd ./$PROJECT_NAME_FOLDER$\T1/phv/m/n/
-10.95 ); 
+Overfull \hbox (17.06631pt too wide) in paragraph at lines 117--118
+[]\T1/phv/m/n/10.95 Spostarsi nel-la cartel-la cre-atasi con l'es-trazione. (Es
+-em-pio co-man-do: \T1/cmtt/m/n/10.95 cd ./$PROJECT_NAME_FOLDER$\T1/phv/m/n/10.
+95 ); 
  []
 
 [2{/usr/share/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}]
-LaTeX Font Info:    Font shape `T1/phv/m/it' in size <9> not available
-(Font)              Font shape `T1/phv/m/sl' tried instead on input line 123.
+Overfull \hbox (13.29727pt too wide) in paragraph at lines 124--126
+\T1/cmtt/m/n/10.95 ARTIFICIALE $\OMS/cmsy/m/n/10.95 ^^@^^@$\T1/cmtt/m/n/10.95 t
+erm konsole \T1/phv/m/n/10.95 op-pure \T1/cmtt/m/n/10.95 ./ADAS-simulator ARTIF
+ICIALE $\OMS/cmsy/m/n/10.95 ^^@^^@$\T1/cmtt/m/n/10.95 term xfce4-terminal\T1/ph
+v/m/n/10.95 ) 
+ []
+
 
 
 pdfTeX warning: /usr/bin/pdflatex (file ./include/SO_Progetto_Diagrammi-Gerarch
 ia.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allo
 wed
-<./include/SO_Progetto_Diagrammi-Gerarchia.pdf, id=101, 572.1375pt x 394.3533pt
+<./include/SO_Progetto_Diagrammi-Gerarchia.pdf, id=116, 572.1375pt x 394.3533pt
 >
 File: ./include/SO_Progetto_Diagrammi-Gerarchia.pdf Graphic file (type pdf)
 <use ./include/SO_Progetto_Diagrammi-Gerarchia.pdf>
 Package pdftex.def Info: ./include/SO_Progetto_Diagrammi-Gerarchia.pdf  used on
- input line 129.
-(pdftex.def)             Requested size: 457.71062pt x 315.48306pt.
+ input line 131.
+(pdftex.def)             Requested size: 400.49352pt x 276.04541pt.
 LaTeX Font Info:    Font shape `T1/phv/m/it' in size <10> not available
-(Font)              Font shape `T1/phv/m/sl' tried instead on input line 130.
+(Font)              Font shape `T1/phv/m/sl' tried instead on input line 132.
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 135.
+(hyperref)                than one, level fixed on input line 136.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 147--147
+Underfull \hbox (badness 10000) in paragraph at lines 157--157
 []|\T1/phv/b/n/10.95 Descrizione del-l'im-ple-men-
  []
 
 
-Underfull \hbox (badness 3375) in paragraph at lines 147--147
-\T1/phv/b/n/10.95 ta-zio-ne con in-di-ca-zio-ne del
+Underfull \hbox (badness 3375) in paragraph at lines 157--157
+\T1/phv/b/n/10.95 tazione con in-di-cazione del
+ []
+
+
+Underfull \hbox (badness 1418) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 la fun-zione \T1/cmtt/m/n/10.95 rand() \T1/phv/m/n/10.95 del-
+la \T1/cmtt/m/n/10.95 libc
+ []
+
+
+Underfull \hbox (badness 1558) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 ot-tiene un nu-mero aleato-rio il
+ []
+
+
+Underfull \hbox (badness 1939) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 cui mod-u-lo per 10000 sim-u-la
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 157--157
+[]|\T1/phv/m/n/10.95 Componente \T1/phv/m/sl/10.95 for-ward fac-ing
+ []
+
+
+Underfull \hbox (badness 4366) in paragraph at lines 157--157
+[]|\T1/phv/m/n/10.95 Quando si at-ti-va l'in-ter-azione
+ []
+
+
+Underfull \hbox (badness 5862) in paragraph at lines 157--157
+[]|\T1/phv/m/n/10.95 Nel ci-clo prin-ci-pale di \T1/phv/m/sl/10.95 park-
+ []
+
+
+Underfull \hbox (badness 1789) in paragraph at lines 157--157
+\T1/phv/m/sl/10.95 assit \T1/phv/m/n/10.95 si es-egue una \T1/cmtt/m/n/10.95 re
+ad \T1/phv/m/n/10.95 da
+ []
+
+
+Underfull \hbox (badness 3803) in paragraph at lines 157--157
+[]|\T1/phv/m/n/10.95 Il co-man-do di \T1/phv/m/sl/10.95 PARCHEG-GIO
+ []
+
+
+Underfull \hbox (badness 5274) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 te-ri-ori co-man-di (ac-cel-er-are o
+ []
+
+
+Underfull \hbox (badness 1655) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 sterzare). I vari at-tua-tori in-
+ []
+
+
+Underfull \hbox (badness 1067) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 ter-rompono le loro azioni, per
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 157--157
+[]|\T1/phv/m/n/10.95 Nella \T1/phv/m/sl/10.95 central-ECU\T1/phv/m/n/10.95 , ne
+l ci-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 clo prin-ci-pale, dopo la let-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 tura da hmi-input, \T1/phv/m/sl/10.95 kill(-
+ []
+
+
+Overfull \hbox (3.29556pt too wide) in paragraph at lines 157--157
+\T1/phv/m/sl/10.95 processes_groups.actuators_gro-
+ []
+
+
+Underfull \hbox (badness 4967) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 dei pro-ces-si \T1/phv/m/sl/10.95 steer \T1/phv/m/n/10.95 e \
+T1/phv/m/sl/10.95 throt-tle
+ []
+
+
+Underfull \hbox (badness 3168) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 (brake ri-mane per il ci-clo di
+ []
+
+
+Underfull \hbox (badness 6268) in paragraph at lines 157--157
+[]|\T1/phv/m/n/10.95 Nella \T1/phv/m/sl/10.95 central-ECU\T1/phv/m/n/10.95 , un
+a vol-ta
+ []
+
+
+Underfull \hbox (badness 1127) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 rice-vu-to il seg-nale di \T1/phv/m/sl/10.95 fal-li-men-
+ []
+
+
+Underfull \hbox (badness 1009) in paragraph at lines 157--157
+\T1/phv/m/sl/10.95 ECU_signal_handler \T1/phv/m/n/10.95 si es-egue
+ []
+
+
+Underfull \hbox (badness 1057) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 la pro-ce-du-ra di ar-resto, stam-
+ []
+
+
+Underfull \hbox (badness 2781) in paragraph at lines 157--157
+\T1/phv/m/n/10.95 pa la stringa di ter-mi-nazione
  []
 
 LaTeX Font Info:    Font shape `T1/phv/m/it' in size <6> not available
-(Font)              Font shape `T1/phv/m/sl' tried instead on input line 147.
-[3 <./include/SO_Progetto_Diagrammi-Gerarchia.pdf>] [4]
+(Font)              Font shape `T1/phv/m/sl' tried instead on input line 157.
+[3 <./include/SO_Progetto_Diagrammi-Gerarchia.pdf>] [4
+
+]
 
 Package hyperref Warning: Difference (4) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 155.
+(hyperref)                than one, level fixed on input line 164.
 
 
-Underfull \hbox (badness 10000) in alignment at lines 171--171
+Underfull \hbox (badness 10000) in alignment at lines 180--180
 [][] 
  []
 
 
 Package hyperref Warning: Difference (3) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 175.
+(hyperref)                than one, level fixed on input line 184.
 
 [5]
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 183.
+(hyperref)                than one, level fixed on input line 192.
 
 
 
 pdfTeX warning: /usr/bin/pdflatex (file ./include/SO_Progetto_Diagrammi-Comunic
 azione.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> 
 allowed
-<./include/SO_Progetto_Diagrammi-Comunicazione.pdf, id=155, 577.19638pt x 202.8
-378pt>
+<./include/SO_Progetto_Diagrammi-Comunicazione.pdf, id=172, 585.14606pt x 197.7
+789pt>
 File: ./include/SO_Progetto_Diagrammi-Comunicazione.pdf Graphic file (type pdf)
 
 <use ./include/SO_Progetto_Diagrammi-Comunicazione.pdf>
 Package pdftex.def Info: ./include/SO_Progetto_Diagrammi-Comunicazione.pdf  use
-d on input line 188.
-(pdftex.def)             Requested size: 519.47194pt x 182.55232pt.
-[6] [7 <./include/SO_Progetto_Diagrammi-Comunicazione.pdf>] (./Relazione.toc)
+d on input line 197.
+(pdftex.def)             Requested size: 526.62659pt x 177.99936pt.
+[6 <./include/SO_Progetto_Diagrammi-Comunicazione.pdf>]
+
+Package hyperref Warning: Difference (4) between bookmark levels is greater 
+(hyperref)                than one, level fixed on input line 214.
+
+
+Package hyperref Warning: Difference (3) between bookmark levels is greater 
+(hyperref)                than one, level fixed on input line 218.
+
+
+Overfull \hbox (1.94902pt too wide) in paragraph at lines 218--220
+ []\T1/phv/b/n/10.95 Esempio: NOR-MALE ter-mi-nale per-son-al-iz-za-to[][] \T1/
+phv/m/n/10.95 Il pre-sente es-em-pio è teso a mostrare un'ese-cuzione
+ []
+
+[7] (./Relazione.toc)
 \tf@toc=\write5
 \openout5 = `Relazione.toc'.
 
-
-[8] (./Relazione.aux)
+ [8] (./Relazione.aux)
 Package rerunfilecheck Info: File `Relazione.out' has not changed.
-(rerunfilecheck)             Checksum: BB221C798692F830A7424A7F1E56B930;2383.
+(rerunfilecheck)             Checksum: D23E836FA83A0C39B68790A99B8F1F26;3159.
  ) 
 Here is how much of TeX's memory you used:
- 28338 strings out of 476025
- 529839 string characters out of 5796532
+ 28349 strings out of 477985
+ 529953 string characters out of 5840058
  1870388 words of memory out of 5000000
- 48234 multiletter control sequences out of 15000+600000
- 579621 words of font info for 115 fonts, out of 8000000 for 9000
- 1141 hyphenation exceptions out of 8191
- 101i,16n,104p,1338b,594s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 47987 multiletter control sequences out of 15000+600000
+ 582664 words of font info for 118 fonts, out of 8000000 for 9000
+ 14 hyphenation exceptions out of 8191
+ 101i,16n,104p,1356b,598s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 pdfTeX warning (dest): name{Hfootnote.6} has been referenced but does not exist
 , replaced by a fixed one
 
 </usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texmf-dist/fonts/ty
-pe1/public/amsfonts/cm/cmr9.pfb></usr/share/texmf-dist/fonts/type1/public/amsfo
-nts/cm/cmsy10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.p
-fb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/
-texmf-dist/fonts/type1/public/cm-super/sftt0900.pfb></usr/share/texmf-dist/font
-s/type1/public/cm-super/sftt1095.pfb></usr/share/texmf-dist/fonts/type1/urw/hel
-vetic/uhvb8a.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvbo8a.pfb></
-usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texmf-dist
-/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on Relazione.pdf (8 pages, 247873 bytes).
+mf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmr8.pfb></usr/share/texmf-dist/fonts/type1/public/amsfo
+nts/cm/cmr9.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pf
+b></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-dist/fonts
+/type1/public/cm-super/sftt0900.pfb></usr/share/texmf-dist/fonts/type1/public/c
+m-super/sftt1000.pfb></usr/share/texmf-dist/fonts/type1/public/cm-super/sftt109
+5.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/share/te
+xmf-dist/fonts/type1/urw/helvetic/uhvbo8a.pfb></usr/share/texmf-dist/fonts/type
+1/urw/helvetic/uhvr8a.pfb></usr/share/texmf-dist/fonts/type1/urw/helvetic/uhvro
+8a.pfb>
+Output written on Relazione.pdf (8 pages, 258839 bytes).
 PDF statistics:
- 270 PDF objects out of 1000 (max. 8388607)
- 221 compressed objects within 3 object streams
- 46 named destinations out of 1000 (max. 500000)
- 151 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 299 PDF objects out of 1000 (max. 8388607)
+ 246 compressed objects within 3 object streams
+ 49 named destinations out of 1000 (max. 500000)
+ 183 words of extra memory for PDF output out of 10000 (max. 10000000)
 

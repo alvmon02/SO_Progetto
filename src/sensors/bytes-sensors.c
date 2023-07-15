@@ -104,7 +104,6 @@ int main(int argc, char * argv[]){
 		if(read_conv_broad(input_fd, input_hex, comm_fd, log_fd) <= 0){
 			lseek(input_fd, 0, SEEK_SET);
 			perror("bytes-sensors: input file terminated: file pointer reset");
-
 		}
   }
 }

@@ -3,7 +3,7 @@
 \contentsline {part}{Presentazione}{1}{section*.1}%
 \contentsline {paragraph}{Titolo}{1}{section*.2}%
 \contentsline {paragraph}{Autori}{1}{section*.3}%
-\contentsline {paragraph}{Obbiettivo}{1}{section*.4}%
+\contentsline {paragraph}{Obiettivo}{1}{section*.4}%
 \contentsline {part}{Introduzione}{1}{section*.5}%
 \contentsline {paragraph}{Introduzione al progetto}{1}{section*.6}%
 \contentsline {paragraph}{Impostazione del lavoro}{2}{section*.7}%
@@ -13,8 +13,12 @@
 \contentsline {subparagraph}{Estrazione e compilazione}{2}{section*.11}%
 \contentsline {subparagraph}{Esecuzione}{3}{section*.12}%
 \contentsline {paragraph}{Elementi facoltativi}{3}{section*.14}%
-\contentsline {part}{Descrizione architettura sistema}{4}{section*.15}%
+\contentsline {part}{Descrizione architettura sistema}{5}{section*.15}%
 \contentsline {paragraph}{Implementazione componenti}{5}{section*.16}%
 \contentsline {paragraph}{Gerarchia del programma}{5}{section*.17}%
 \contentsline {paragraph}{IPC nel sistema}{6}{section*.18}%
 \contentsline {paragraph}{Gestione dei log}{6}{section*.20}%
+\contentsline {paragraph}{Funzioni condivise}{7}{section*.21}%
+\contentsline {part}{Esempi di esecuzione}{7}{section*.22}%
+\contentsline {paragraph}{Esempio: ARTIFICIALE standard}{7}{section*.23}%
+\contentsline {paragraph}{Esempio: NORMALE terminale personalizzato}{7}{section*.24}%
