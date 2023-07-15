@@ -62,14 +62,14 @@ int main(){
 	while(true){
 		nread = read(pipe_fd, action, sizeof(action));
 		switch(nread){
-			case 7:
+			case 8:
 				turn(log_phrase, RIGHT);
-				perror("steer: red right");
+				perror("steer: read right");
 				break;
 
-			case 9:
+			case 10:
 				turn(log_phrase, LEFT);
-				perror("steer: red left");
+				perror("steer: read left");
 				break;
 
 			default:
@@ -82,9 +82,9 @@ int main(){
 void turn ( char * log_phrase, short int direction){
 	// Viene aggiunta alla stringa precedentemente definita log_phrase la corretta direzione da inserire nel log
 	if(direction == LEFT)
-		strcpy(&log_phrase[LOG_COMM_LEN], "SINISTRA\n");
+		strcpy(&log_phrase[LOG_COMM_LEN], "SINISTRA\n\0");
 	else
-		strcpy(&log_phrase[LOG_COMM_LEN], "DESTRA\n");
+		strcpy(&log_phrase[LOG_COMM_LEN], "DESTRA\n\0");
 
 	// Si esegue la scrittura della log_phrase in steer.log per 4 volte (una volta al secondo per 4 secondi)
 	for(int i = 0; i < TURN_SECONDS; i++){

@@ -1,1 +1,0 @@
-Avvio imperfetto in lato lettura del pipe hmi_in: la central_ECU non legge il contenuto durante il primo avvio successivo alla compilazione. Rilevazione su architetture arch based
