@@ -16,16 +16,17 @@
 #define INPUT_MAX_LEN 12
 
 void start_handler ( int );
-
-// File descriptor del log file
-int log_fd;
-// File descriptor del pipe in scrittura
-int pipe_fd;
-int input_fd;
 bool start_flag = false;
 
 //La funzione main esegue le operazioni relative al componente windshield-camera
 int main ( ) {
+  // File descriptor del log file
+  int log_fd;
+  // File descriptor del pipe in scrittura
+  int pipe_fd;
+  // File descriptor del file da cui prende i dati in input 
+  int input_fd;
+
   signal(SIGUSR1, start_handler);
   // Connessione del file descriptor del pipe per la comunicazione tra central
   // ECU e windshield-camera. Il protocollo impone che il pipe sia creato
