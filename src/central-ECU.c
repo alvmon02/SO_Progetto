@@ -218,7 +218,7 @@ int main(int argc, char **argv) {
   }
 
   // avvia la procedura di parcheggio
-  if (kill(parking_signal, SIGINT) < 0)
+  if (kill(parking_signal, SIGKILL) < 0)
     perror("ECU: kill parking signal");
   char park_data[BYTES_CONVERTED];
   park_process = park_assist_init(modalita);
@@ -371,6 +371,7 @@ struct process park_assist_init(char *modalita) {
 int initialize_server_socket(const char *socket_name) {
   int sock_fd;
   int cli_fd;
+  unlink(socket_name);
   while ((sock_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
     perror("ECU: socket function error");
     sleep(1);
