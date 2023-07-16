@@ -3,8 +3,8 @@
 
 	#include <sys/types.h>
 
-	#define READ 0
-	#define WRITE 1
+	#define IN 0
+	#define OUT 1
 	#define LEFT 0
 	#define RIGHT 1
 	#define THROTTLE 0

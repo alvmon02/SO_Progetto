@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <signal.h>
-#include <errno.h>
 #include "../../include/service-functions.h"
 // MACROS
 // INPUT_MAX_LEN: lunghezza della stringa di input dalla central-ECU:

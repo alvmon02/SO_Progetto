@@ -7,7 +7,6 @@
 #include <stdbool.h>
 #include <signal.h>
 #include <string.h>
-#include <errno.h>
 #include "../../include/service-functions.h"
 
 // MACROS
@@ -27,7 +26,10 @@ int main ( ) {
   // File descriptor del file da cui prende i dati in input 
   int input_fd;
 
+  // Al segnale SIGUSR1 viene associato il gestore start_handler che avvia la lettura dei dati da file
+  // quando la ECU manda il segnale che indica che e' iniziato il viaggio della automobile 
   signal(SIGUSR1, start_handler);
+
   // Connessione del file descriptor del pipe per la comunicazione tra central
   // ECU e windshield-camera. Il protocollo impone che il pipe sia creato
   // durante la fase di inizializzazione del processo central-ECU e che venga
@@ -66,12 +68,10 @@ int main ( ) {
   }
 
   // Il ciclo successivo rappresenta il cuore del processo.
-  // Ad ogni lettura del file di input accadrà che il file non ha
-  // raggiunto ancora la terminazione, ad eccezione dell'ultima lettura
-  // nella quale verrà ottenuta una stringa EOF, quindi nread = 0.
+  // Ad ogni lettura il processo potra' o leggere dei dati o, con nread = 0, essere arrivato alla
+  // fine del file.
   // Fintantoché il file non termina i dati vengono trasmessi alla
-  // central-ECU, una volta terminato il processo termina con codice
-  // EOF (=0).
+  // central-ECU, una volta terminato il processo termina.
   FILE * input_file = fdopen(input_fd, "r");
   while (true) {
    if(fgets(camera_input, INPUT_MAX_LEN, input_file) == NULL){
@@ -84,6 +84,7 @@ int main ( ) {
   }
 }
 
+// Imposta il flag start_flag true cosi' che il processo esca dal ciclo d'attesa ed entri in quello di lettura
 void start_handler(int sig){
   start_flag = true;
 }
