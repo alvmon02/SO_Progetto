@@ -11,7 +11,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <time.h>
-#include <errno.h>
 #include "../include/service-functions.h"
 
 // Funzione per l'inizializzazione delle pipe.

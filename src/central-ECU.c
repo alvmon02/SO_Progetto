@@ -1,7 +1,6 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "../include/service-functions.h"
-#include <errno.h>
 #include <fcntl.h>
 #include <linux/limits.h>
 #include <signal.h>
@@ -147,15 +146,15 @@ int main(int argc, char **argv) {
   */
   hmi_process = malloc(2 * sizeof(struct process));
   if (argc == 4 && !(strcmp(argv[2], "--term"))) {
-    if (!(hmi_process[WRITE].pid = fork()))
+    if (!(hmi_process[OUT].pid = fork()))
       execlp("./sh/new_terminal.sh", "./sh/new_terminal.sh", argv[3], NULL);
   } else {
-    if (!(hmi_process[WRITE].pid = fork()))
+    if (!(hmi_process[OUT].pid = fork()))
       execlp("./sh/new_terminal.sh", "./sh/new_terminal.sh", NULL);
   }
   // Inizializza i processi associati alla hmi sia in lettura che in scrittura
-  hmi_init(hmi_process, 2);
-  processes_groups.hmi_group = (hmi_process + READ)->pgid;
+  hmi_init(hmi_process);
+  processes_groups.hmi_group = (hmi_process + IN)->pgid;
 
   /*
     Vengono inizializzate le ultime variabili necessarie per l'esecuzione corretta del programma:
@@ -182,7 +181,7 @@ int main(int argc, char **argv) {
   while (flag_arrest) {
     sleep(1);
     hmi_command = -1;
-    read(hmi_process[READ].comm_fd, &hmi_command, sizeof(unsigned short int));
+    read(hmi_process[IN].comm_fd, &hmi_command, sizeof(unsigned short int));
     switch (hmi_command) {
     case PARCHEGGIO:
       travel_flag = false;
@@ -190,7 +189,7 @@ int main(int argc, char **argv) {
       flag_arrest = false;
       break;
     case ARRESTO:
-      if (kill(hmi_process[READ].pid, SIGUSR2) < 0)
+      if (kill(hmi_process[IN].pid, SIGUSR2) < 0)
         perror("ECU: kill");
     default:
       break;
@@ -235,13 +234,13 @@ int main(int argc, char **argv) {
     // lettura camera.pipe
     read(radar_process.comm_fd, radar_buf, BYTES_CONVERTED);
     // lettura hmi-in.pipe
-    if (read(hmi_process[READ].comm_fd, &hmi_command, sizeof(short int)) > 0) {
+    if (read(hmi_process[IN].comm_fd, &hmi_command, sizeof(short int)) > 0) {
       if (hmi_command == PARCHEGGIO)
         break;
       else if (hmi_command == ARRESTO)
         arrest(brake_process.pid);
       else
-        kill(hmi_process[READ].pid, SIGUSR2);
+        kill(hmi_process[IN].pid, SIGUSR2);
     }
 
     // lettura camera.pipe
@@ -253,7 +252,7 @@ int main(int argc, char **argv) {
       arrest(brake_process.pid);
     else if (!(strcmp(camera_buf, "DESTRA\n\0") &&
                strcmp(camera_buf, "SINISTRA\n\0"))) {
-      send_command(steer_process.comm_fd, log_fd, hmi_process[WRITE].comm_fd,
+      send_command(steer_process.comm_fd, log_fd, hmi_process[OUT].comm_fd,
                    camera_buf, strlen(camera_buf) + 1);
     } else if ((temp_v = atoi(camera_buf)) > 0)
       requested_speed = temp_v;
@@ -262,7 +261,7 @@ int main(int argc, char **argv) {
     // aggiornamento velocita'
     if (speed != requested_speed)
       change_speed(requested_speed, throttle_process.comm_fd,
-                   brake_process.comm_fd, log_fd, hmi_process[WRITE].comm_fd);
+                   brake_process.comm_fd, log_fd, hmi_process[OUT].comm_fd);
   }
 
   /*
@@ -284,7 +283,7 @@ int main(int argc, char **argv) {
   */
   while (speed > 0) {
     change_speed(0, throttle_process.comm_fd, brake_process.comm_fd, log_fd,
-                 hmi_process[WRITE].comm_fd);
+                 hmi_process[OUT].comm_fd);
     sleep(1);
   }
 
@@ -321,7 +320,7 @@ int main(int argc, char **argv) {
   */
   write(park_process.comm_fd, "INIZIO\n\0", sizeof("INIZIO\n") + 1);
   while (true) {
-    broad_log(hmi_process[WRITE].comm_fd, log_fd,
+    broad_log(hmi_process[OUT].comm_fd, log_fd,
               "INIZIO PROCEDURA PARCHEGGIO\n\0",
               sizeof("INIZIO PROCEDURA PARCHEGGIO\n") + 1);
 
@@ -334,13 +333,13 @@ int main(int argc, char **argv) {
     }
 
     if (!strcmp(park_data, "FINITO\n")) {
-      broad_log(hmi_process[WRITE].comm_fd, log_fd,
+      broad_log(hmi_process[OUT].comm_fd, log_fd,
                 "PROCEDURA PARCHEGGIO COMPLETATA\n\0",
                 sizeof("PROCEDURA PARCHEGGIO COMPLETATA\n") + 1);
       break;
     } else {
       write(park_process.comm_fd, "RIAVVIO\n\0", sizeof("RIAVVIO\n") + 1);
-      broad_log(hmi_process[WRITE].comm_fd, log_fd,
+      broad_log(hmi_process[OUT].comm_fd, log_fd,
                 "ERRORE PARCHEGGIO, PROCEDURA INCOMPLETA\n\0",
                 sizeof("ERRORE PARCHEGGIO, PROCEDURA INCOMPLETA\n") + 1);
       perror("ECU: riavvio parcheggio");
@@ -355,11 +354,11 @@ int main(int argc, char **argv) {
     e hmi-input.
   */
 
-  broad_log(hmi_process[WRITE].comm_fd, log_fd, "TERMINAZIONE PROGRAMMA\n\0",
+  broad_log(hmi_process[OUT].comm_fd, log_fd, "TERMINAZIONE PROGRAMMA\n\0",
             sizeof("TERMINAZIONE PROGRAMMA\n") + 1);
   close(park_process.comm_fd);
   kill(park_process.pid, SIGINT);
-  kill(hmi_process[READ].pid, SIGKILL);
+  kill(hmi_process[IN].pid, SIGKILL);
   return 0;
 }
 
@@ -424,13 +423,13 @@ struct process park_assist_init(char *modalita) {
   nel padre e si conservano il pgid nelle strutture.
 */
 void hmi_init(struct process *hmi_processes) {
-  (hmi_processes + READ)->pid = make_process("hmi-input", 10, getpid(), NULL);
-  (hmi_processes + READ)->comm_fd =
+  (hmi_processes + IN)->pid = make_process("hmi-input", 10, getpid(), NULL);
+  (hmi_processes + IN)->comm_fd =
       initialize_pipe("tmp/hmi-in.pipe", O_RDONLY | O_NONBLOCK, 0666);
-  (hmi_processes + WRITE)->comm_fd =
+  (hmi_processes + OUT)->comm_fd =
       initialize_pipe("tmp/hmi-out.pipe", O_WRONLY, 0666);
-  (hmi_processes + READ)->pgid = getpgid((hmi_processes + READ)->pid);
-  (hmi_processes + WRITE)->pgid = getpgid((hmi_processes + READ)->pid);
+  (hmi_processes + IN)->pgid = getpgid((hmi_processes + IN)->pid);
+  (hmi_processes + OUT)->pgid = getpgid((hmi_processes + IN)->pid);
   return;
 }
 
@@ -483,7 +482,7 @@ void ECU_signal_handler(int sig) {
   if (sig == SIGUSR1) {
     // significa che ha fallito l'accelerazione
     arrest(brake_process.pid);
-    broad_log(hmi_process[WRITE].comm_fd, log_fd, "TERMINAZIONE PROGRAMMA\n\0",
+    broad_log(hmi_process[OUT].comm_fd, log_fd, "TERMINAZIONE PROGRAMMA\n\0",
             sizeof("TERMINAZIONE PROGRAMMA\n") + 1);
     // TERMINO TUTTI I PROCESSI DOPO AVER ARRESTATO LA MACCHINA
     kill(-processes_groups.actuators_group, SIGKILL);
@@ -509,7 +508,7 @@ void ECU_signal_handler(int sig) {
   la necessita di fermarsi tramite il comando SIGUSR1.
 */
 void arrest(pid_t brake_process) {
-  broad_log(hmi_process[WRITE].comm_fd, log_fd, "ARRESTO AUTO\n\0",
+  broad_log(hmi_process[OUT].comm_fd, log_fd, "ARRESTO AUTO\n\0",
             sizeof("ARRESTO AUTO\n") + 1);
   kill(brake_process, SIGUSR1);
   speed = 0;

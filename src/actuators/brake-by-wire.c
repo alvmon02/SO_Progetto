@@ -13,7 +13,7 @@
 // LOG_PHRASE_LEN: lunghezza della stringa di log: "DD/MM/YYYY hh:mm:ss - FRENO 5\n"
 #define LOG_PHRASE_LEN 31
 
-// File descriptor del log file
+// File descriptor del log file log/brake.log
 int log_fd;
 
 void emergency_arrest ( int );
@@ -21,6 +21,9 @@ void emergency_arrest ( int );
 //La funzione main esegue le operazioni relative al componente brake-by-wire.c
 int main ( ) {
 
+	/*	Viene definito il gestore dei segnali che permette di eseguire, in caso di ricezione del segnale SIGUSR1
+	 *	l'arresto d'emergenza con la funzione emergency_arrest
+	 */
 	struct sigaction act = { 0 };
 	act.sa_flags = SA_RESTART;
 	act.sa_handler = &emergency_arrest;
@@ -36,28 +39,28 @@ int main ( ) {
 	}
 
 	/* Connessione del file descriptor del log file. Apertura in sola scrittura.
-	 * Qualora il file non esista viene creato. Qualora il file sia presente
-	 * si mantengono le precedenti scritture. Dato che viene eseguito l'unlink
-	 * da parte della central-ECU allora non vi saranno scritture pendenti da
-	 * precedenti esecuzioni. */
+	 * Qualora il file non esista viene creato e se esiste viene sovrascritto dal nuovo file.
+	 */
 	if((log_fd = openat(AT_FDCWD, "log/brake.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
 		perror("open brake log");
 		exit(EXIT_FAILURE);
 	}
 
-	/* Inizializzazione della stringa di input che rappresenqta il comando
-	 * impartito dalla central-ECU tramite una stringa di caratteri. */
+	/* Inizializzazione della stringa di input che rappresenta il comando
+	 * impartito dalla central-ECU tramite una stringa di caratteri.
+	 */
 	char decrement[INPUT_MAX_LEN];
 	int nread;
 
   /* Il ciclo infinito successivo rappresenta il cuore del processo.
-   * Ad ogni lettura del del pipe potra` accadere:
+   * Ad ogni lettura del pipe potra` accadere:
    * che il pipe in scrittura non sia ancora stato aperto (nread = -1),
    * che il pipe sia aperto ma che non vi sia stato ancora scritto niente (nread = 0),
    * che nel pipe sia stata inserita la stringa "FRENO 5\n" (nread > 0) che rappresenta
    * la richiesta di decremento della velocita' da parte della central-ECU.
-   * Quest'ultimo caso da' inizio alla procedura simulativa dell'freno.
-   * Il pipe e` bloccante quindi il processo attende un messaggio dalla central-ECU */
+   * Quest'ultimo caso da' inizio alla procedura simulativa della frenata.
+   * Il pipe e` bloccante quindi il processo attende un messaggio dalla central-ECU
+   */
 	while(true){
 		nread = read (pipe_fd, decrement, INPUT_MAX_LEN);
 		if(nread < 0){
@@ -73,7 +76,8 @@ int main ( ) {
  * in caso di pericolo ricevuto dalla central-ECU attraverso la scrittura
  * nel log file della stringa "ARRESTO AUTO\n".
  * Questa costituisce il gestore (o handler) del segnale di pericolo
- * da parte della central-ECU. */
+ * lanciato dalla central-ECU. 
+ */
 void  emergency_arrest ( int sig ){
 	if(write(log_fd, "ARRESTO AUTO\n", 13) < 0){
 		perror("brake: emergency arrest: write");

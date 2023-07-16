@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <signal.h>
-#include <errno.h>
 #include "../../include/service-functions.h"
 // MACROS
 // INPUT_MAX_LEN: lunghezza della stringa di input dalla central-ECU:
@@ -36,7 +35,6 @@ int main() {
     perror("throttle: openat pipe");
     exit(EXIT_FAILURE);
   }
-  perror("throttle: CONNECTED");
 
   if((log_fd = openat (AT_FDCWD, "log/throttle.log", O_WRONLY | O_TRUNC | O_CREAT, 0644)) < 0){
     perror("throttle: openat log");
@@ -85,7 +83,7 @@ central-ECU */
  * maggiore, ovvero un valore in [0, 83647] viene prodotto 21475/21474 volte in
  * piu' di un valore compreso in [83648,99999].
  * Ai fini del programma risulta comunque una differenza minima che
- * non ne` compromette il funzionamento */
+ * non ne compromette il funzionamento */
 bool throttle_failed() {
   if ((rand() % 100000) == 0) {
     if(kill(getppid(), SIGUSR1)){
